@@ -33,10 +33,11 @@ fn main() -> Result<(), Box<dyn Error>> {
     execute!(stdout, EnterAlternateScreen, EnableMouseCapture)?;
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
+    terminal.clear()?;
 
     // Application Entry Point
-    let app = App::new();
-    let res = run_app(&mut terminal, app);
+    let mut app = App::new();
+    let res = run_app(&mut terminal, &mut app);
 
     // Restore Terminal
     disable_raw_mode()?;
@@ -55,15 +56,22 @@ fn main() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: App) -> io::Result<()> {
+fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<()> {
     loop {
         // Render UI
-        terminal.draw(|frame| ui(frame, &app))?;
+        terminal.draw(|frame| ui(frame, app))?;
 
         // Handle Events
         if let Event::Key(key) = event::read()? {
-            if let KeyCode::Char('q') = key.code {
-                return Ok(());
+            match key.code {
+                KeyCode::Char('q') => return Ok(()),
+                KeyCode::Char('j') => app.list_down(),
+                KeyCode::Char('k') => app.list_up(),
+                KeyCode::Char('h') => app.prev_list(),
+                KeyCode::Char('l') => app.next_list(),
+                KeyCode::Char(' ') => app.move_task_to_next_list(),
+                KeyCode::Backspace => app.move_task_to_prev_list(),
+                _ => {}
             }
         }
     }
