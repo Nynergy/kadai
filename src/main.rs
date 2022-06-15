@@ -21,6 +21,7 @@ use tui::{
 };
 
 mod app;
+mod task_list;
 mod ui;
 
 use app::*;
