@@ -39,7 +39,7 @@ impl TaskList {
                 Task::from(
                     "Task 1".to_string(),
                 )
-                .description("This is a description that is so long, it simply must wrap, otherwise the app will crash and burn.".to_string()),
+                .description("This is a description that is so long, it simply must wrap, otherwise the app will crash and burn. In fact, even the task details popup can't properly render it without wrapping the text first.".to_string()),
                 Task::from(
                     "Task 2 with a name so long it will be truncated in order to fit into the task box".to_string(),
                 ),

@@ -2,7 +2,13 @@ use std::cmp;
 
 use crate::task_list::*;
 
+pub enum AppState {
+    Tracker,
+    TaskView,
+}
+
 pub struct App {
+    pub state: AppState,
     pub task_lists: Vec<TaskList>,
     pub active_list: usize,
 }
@@ -10,6 +16,7 @@ pub struct App {
 impl App {
     pub fn new() -> Self {
         let mut app = Self {
+            state: AppState::Tracker,
             task_lists: vec![
                 TaskList::new(),
                 TaskList::new(),
@@ -119,5 +126,21 @@ impl App {
                 None => return,
             }
         }
+    }
+
+    pub fn change_state(&mut self, state: AppState) {
+        self.state = state;
+    }
+
+    pub fn get_selected_task(&self) -> Option<&Task> {
+        let list = &self.task_lists[self.active_list];
+        match list.state.selected() {
+            Some(i) => Some(&list.tasks[i]),
+            None => None
+        }
+    }
+
+    pub fn focused_list_is_empty(&self) -> bool {
+        self.task_lists[self.active_list].tasks.is_empty()
     }
 }

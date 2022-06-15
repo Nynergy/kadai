@@ -64,15 +64,30 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
 
         // Handle Events
         if let Event::Key(key) = event::read()? {
-            match key.code {
-                KeyCode::Char('q') => return Ok(()),
-                KeyCode::Char('j') => app.list_down(),
-                KeyCode::Char('k') => app.list_up(),
-                KeyCode::Char('h') => app.prev_list(),
-                KeyCode::Char('l') => app.next_list(),
-                KeyCode::Char(' ') => app.move_task_to_next_list(),
-                KeyCode::Backspace => app.move_task_to_prev_list(),
-                _ => {}
+            match app.state {
+                AppState::Tracker => {
+                    match key.code {
+                        KeyCode::Char('q') => return Ok(()),
+                        KeyCode::Char('j') => app.list_down(),
+                        KeyCode::Char('k') => app.list_up(),
+                        KeyCode::Char('h') => app.prev_list(),
+                        KeyCode::Char('l') => app.next_list(),
+                        KeyCode::Char(' ') => app.move_task_to_next_list(),
+                        KeyCode::Backspace => app.move_task_to_prev_list(),
+                        KeyCode::Enter => {
+                            if !app.focused_list_is_empty() {
+                                app.change_state(AppState::TaskView);
+                            }
+                        },
+                        _ => {}
+                    }
+                },
+                AppState::TaskView => {
+                    match key.code {
+                        KeyCode::Esc => app.change_state(AppState::Tracker),
+                        _ => {}
+                    }
+                },
             }
         }
     }
