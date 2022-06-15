@@ -3,6 +3,7 @@ use tui::widgets::ListState;
 pub struct Task {
     pub summary: String,
     pub description: Option<String>,
+    pub category: Option<String>,
 }
 
 impl Task {
@@ -10,11 +11,17 @@ impl Task {
         Self {
             summary,
             description: None,
+            category: None,
         }
     }
 
     pub fn description(mut self, description: String) -> Self {
         self.description = Some(description);
+        self
+    }
+
+    pub fn category(mut self, category: String) -> Self {
+        self.category = Some(category);
         self
     }
 }
@@ -38,10 +45,12 @@ impl TaskList {
                 ),
                 Task::from(
                     "Task 3".to_string(),
-                ),
+                )
+                .category("TODO".to_string()),
                 Task::from(
                     "Task 4".to_string(),
-                ),
+                )
+                .category("Personal long category".to_string()),
             ],
         }
     }

@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use textwrap::wrap;
 use tui::{
     backend::Backend,
@@ -107,8 +108,8 @@ fn task_spans<'a>(task: &Task, width: u16) -> Vec<Spans<'a>> {
 
     // Summary Text
     let mut summary = task.summary.clone();
-    if task.summary.len() >= width as usize - 4 {
-        summary.truncate(width as usize - 7);
+    if task.summary.len() >= width as usize / 3 * 2 {
+        summary.truncate(width as usize / 3 * 2 - 5);
         summary = format!("{}...", summary);
     }
     let mut line = String::new();
@@ -117,26 +118,66 @@ fn task_spans<'a>(task: &Task, width: u16) -> Vec<Spans<'a>> {
         Span::styled(
             line,
             Style::default()
-            .add_modifier(Modifier::BOLD)
-            .add_modifier(Modifier::UNDERLINED)
+            .add_modifier(Modifier::BOLD | Modifier::UNDERLINED)
         )
     );
 
+    // Category Text
+    if let Some(category) = &task.category {
+        let mut category = category.clone();
+        if category.len() >= width as usize / 3 {
+            category.truncate(width as usize / 3 - 5);
+            category = format!("{}...", category);
+        }
+        let mut line = String::new();
+        line.push_str(&category);
+        spans.push(
+            Span::styled(
+                line,
+                Style::default()
+                .add_modifier(Modifier::BOLD | Modifier::UNDERLINED)
+            )
+        );
+    }
+
     // Summary Right Side
-    let remaining_width = (width - 1) as usize - spans.iter()
+    let remaining_width = (width - 2) as usize - spans.iter()
                                                       .map(|span| span.width())
                                                       .sum::<usize>();
+
     let mut line = String::new();
     for _ in 0..remaining_width {
         line.push_str(" ");
     }
-    line.push_str(line::VERTICAL);
+    match task.category {
+        Some(_) => spans.insert(
+            spans.len() - 1, Span::styled(
+                line,
+                Style::default()
+                .add_modifier(Modifier::BOLD | Modifier::UNDERLINED),
+                )
+            ),
+        None => spans.push(
+                Span::styled(
+                    line,
+                    Style::default()
+                    .add_modifier(Modifier::BOLD | Modifier::UNDERLINED),
+                )
+            ),
+    }
+
+    let mut line = String::new();
+    line.push_str(&format!(" {}", line::VERTICAL));
     spans.push(Span::raw(line));
     lines.push(Spans::from(spans));
 
     // Description
     if let Some(description) = &task.description {
-        let wrapped = wrap(description, (width - 4) as usize);
+        let mut wrapped = wrap(description, (width - 4) as usize);
+        if wrapped.len() > 3 {
+            wrapped.truncate(2);
+            wrapped.push(Cow::Borrowed("..."));
+        }
 
         for l in wrapped {
             // Description Left Side
