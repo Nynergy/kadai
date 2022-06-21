@@ -72,6 +72,8 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                         KeyCode::Char('k') => app.list_up(),
                         KeyCode::Char('h') => app.prev_list(),
                         KeyCode::Char('l') => app.next_list(),
+                        KeyCode::Char('c') => app.cycle_list_color(1),
+                        KeyCode::Char('C') => app.cycle_list_color(-1),
                         KeyCode::Char(' ') => app.move_task_to_next_list(),
                         KeyCode::Backspace => app.move_task_to_prev_list(),
                         KeyCode::Enter => {
@@ -86,7 +88,10 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                     match key.code {
                         KeyCode::Char('j') => app.scroll_details(1),
                         KeyCode::Char('k') => app.scroll_details(-1),
-                        KeyCode::Esc => app.change_state(AppState::Tracker),
+                        KeyCode::Char('q') => {
+                            app.reset_scroll();
+                            app.change_state(AppState::Tracker);
+                        },
                         _ => {}
                     }
                 },

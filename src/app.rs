@@ -19,9 +19,15 @@ impl App {
         let mut app = Self {
             state: AppState::Tracker,
             task_lists: vec![
-                TaskList::new(),
-                TaskList::new(),
-                TaskList::new(),
+                TaskList::new()
+                    .name("Planned".to_string())
+                    .color_index(5),
+                TaskList::new()
+                    .name("In Progress".to_string())
+                    .color_index(3),
+                TaskList::new()
+                    .name("Completed".to_string())
+                    .color_index(2),
             ],
             active_list: 0,
             detail_scroll: 0,
@@ -152,5 +158,20 @@ impl App {
             new_scroll = 0;
         }
         self.detail_scroll = new_scroll as u16;
+    }
+
+    pub fn reset_scroll(&mut self) {
+        self.detail_scroll = 0;
+    }
+
+    pub fn cycle_list_color(&mut self, amount: i8) {
+        let list = &mut self.task_lists[self.active_list];
+        let mut new_color = list.color_index as i8 + amount;
+        if new_color < 1 {
+            new_color = 7;
+        } else if new_color > 7 {
+            new_color = 1;
+        }
+        list.color_index = new_color as u8;
     }
 }

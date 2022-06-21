@@ -44,14 +44,8 @@ fn render_tracker<B: Backend>(
         )
         .split(size);
 
-    let list_styles = vec![
-        ("Planned", Color::Magenta),
-        ("In Progress", Color::Yellow),
-        ("Completed", Color::Green),
-    ];
-
-    for i in 0..list_styles.len() {
-        render_task_list(frame, app, list_styles[i], chunks[i], i);
+    for i in 0..app.task_lists.len() {
+        render_task_list(frame, app, chunks[i], i);
     }
 }
 
@@ -83,7 +77,7 @@ fn render_task_data<B: Backend>(
             .direction(Direction::Vertical)
             .constraints(
                 [
-                Constraint::Min(10),
+                Constraint::Min(2),
                 Constraint::Length(1),
                 ]
                 .as_ref()
@@ -143,7 +137,7 @@ fn render_task_data<B: Backend>(
 
         let info = Paragraph::new(
             Span::styled(
-                "Press ESC to close",
+                "Press 'q' to close",
                 Style::default()
                 .fg(Color::Red)
                 .add_modifier(Modifier::BOLD)
@@ -159,7 +153,6 @@ fn render_task_data<B: Backend>(
 fn render_task_list<B: Backend>(
     frame: &mut Frame<B>,
     app: &mut App,
-    list_style: (&str, Color),
     chunk: Rect,
     list_num: usize
 ) {
@@ -179,7 +172,7 @@ fn render_task_list<B: Backend>(
         highlight = Style::default()
             .add_modifier(Modifier::REVERSED);
         border = Style::default()
-            .fg(list_style.1)
+            .fg(Color::Indexed(app.task_lists[list_num].color_index))
             .add_modifier(Modifier::BOLD);
     } else {
         highlight = Style::default();
@@ -191,8 +184,9 @@ fn render_task_list<B: Backend>(
             Block::default()
             .title(
                 Span::styled(
-                    list_style.0,
-                    Style::default().fg(list_style.1)
+                    app.task_lists[list_num].name.clone(),
+                    Style::default()
+                    .fg(Color::Indexed(app.task_lists[list_num].color_index))
                 )
             )
             .title_alignment(Alignment::Center)

@@ -27,6 +27,8 @@ impl Task {
 }
 
 pub struct TaskList {
+    pub name: String,
+    pub color_index: u8,
     pub state: ListState,
     pub tasks: Vec<Task>,
 }
@@ -34,6 +36,8 @@ pub struct TaskList {
 impl TaskList {
     pub fn new() -> Self {
         Self {
+            name: "".to_string(),
+            color_index: 7,
             state: ListState::default(),
             tasks: vec![
                 Task::from(
@@ -53,5 +57,15 @@ impl TaskList {
                 .category("Personal long category".to_string()),
             ],
         }
+    }
+
+    pub fn name(mut self, name: String) -> Self {
+        self.name = name;
+        self
+    }
+
+    pub fn color_index(mut self, color_index: u8) -> Self {
+        self.color_index = color_index;
+        self
     }
 }
