@@ -84,6 +84,8 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                 },
                 AppState::TaskView => {
                     match key.code {
+                        KeyCode::Char('j') => app.scroll_details(1),
+                        KeyCode::Char('k') => app.scroll_details(-1),
                         KeyCode::Esc => app.change_state(AppState::Tracker),
                         _ => {}
                     }

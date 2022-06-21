@@ -136,7 +136,8 @@ fn render_task_data<B: Backend>(
         ];
         let details = Paragraph::new(details)
             .block(Block::default())
-            .wrap(Wrap { trim: true });
+            .wrap(Wrap { trim: true })
+            .scroll((app.detail_scroll, 0));
 
         frame.render_widget(details, chunks[0]);
 

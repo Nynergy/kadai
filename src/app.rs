@@ -11,6 +11,7 @@ pub struct App {
     pub state: AppState,
     pub task_lists: Vec<TaskList>,
     pub active_list: usize,
+    pub detail_scroll: u16,
 }
 
 impl App {
@@ -23,6 +24,7 @@ impl App {
                 TaskList::new(),
             ],
             active_list: 0,
+            detail_scroll: 0,
         };
 
         for i in 0..app.task_lists.len() {
@@ -142,5 +144,13 @@ impl App {
 
     pub fn focused_list_is_empty(&self) -> bool {
         self.task_lists[self.active_list].tasks.is_empty()
+    }
+
+    pub fn scroll_details(&mut self, amount: i16) {
+        let mut new_scroll = self.detail_scroll as i16 + amount;
+        if new_scroll < 0 {
+            new_scroll = 0;
+        }
+        self.detail_scroll = new_scroll as u16;
     }
 }
