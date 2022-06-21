@@ -2,16 +2,76 @@ use std::borrow::Cow;
 use textwrap::wrap;
 use tui::{
     backend::Backend,
+    buffer::Buffer,
     layout::{Alignment, Constraint, Direction, Layout, Margin, Rect},
     style::{Color, Modifier, Style},
     symbols::line,
     text::{Span, Spans},
-    widgets::{Block, Borders, BorderType, Clear, List, ListItem, Paragraph, Wrap},
+    widgets::{
+        Block,
+        Borders,
+        BorderType,
+        Clear,
+        List,
+        ListItem,
+        Paragraph,
+        Widget,
+        Wrap
+    },
     Frame,
 };
 
 use crate::app::*;
 use crate::task_list::*;
+
+struct CustomBorder {
+    title: String,
+    title_style: Style,
+    border_style: Style,
+}
+
+impl CustomBorder {
+    fn new() -> Self {
+        Self {
+            title: "".to_string(),
+            title_style: Style::default(),
+            border_style: Style::default(),
+        }
+    }
+
+    fn title(mut self, title: String) -> Self {
+        self.title = title;
+        self
+    }
+
+    fn title_style(mut self, title_style: Style) -> Self {
+        self.title_style = title_style;
+        self
+    }
+
+    fn border_style(mut self, border_style: Style) -> Self {
+        self.border_style = border_style;
+        self
+    }
+}
+
+impl Widget for CustomBorder {
+    fn render(self, area: Rect, buf: &mut Buffer) {
+        let mut line = String::new();
+        line.push_str(line::VERTICAL_RIGHT);
+        for _ in 0..area.width - 2 {
+            line.push_str(line::HORIZONTAL);
+        }
+        line.push_str(line::VERTICAL_LEFT);
+        buf.set_string(area.left(), area.top(), line.clone(), self.border_style);
+        buf.set_string(area.left(), area.bottom() - 1, line, self.border_style);
+
+        let offset = area.width / 2 - self.title.len() as u16 / 2;
+        let title_x = area.left() + offset;
+        let title_y = area.y;
+        buf.set_string(title_x, title_y, self.title, self.title_style);
+    }
+}
 
 pub fn ui<B: Backend>(frame: &mut Frame<B>, app: &mut App) {
     match app.state {
@@ -179,23 +239,27 @@ fn render_task_list<B: Backend>(
         border = Style::default();
     }
 
-    let list = List::new(items)
-        .block(
-            Block::default()
-            .title(
-                Span::styled(
-                    app.task_lists[list_num].name.clone(),
-                    Style::default()
-                    .fg(Color::Indexed(app.task_lists[list_num].color_index))
+    let container = CustomBorder::new()
+        .title(app.task_lists[list_num].name.clone())
+        .title_style(
+            Style::default()
+            .fg(
+                Color::Indexed(
+                    app.task_lists[list_num].color_index
                 )
             )
-            .title_alignment(Alignment::Center)
-            .borders(Borders::ALL)
-            .border_style(border)
         )
+        .border_style(border);
+
+    frame.render_widget(container, chunk);
+
+    let list = List::new(items)
+        .block(Block::default())
         .highlight_style(highlight);
 
-    frame.render_stateful_widget(list, chunk, &mut app.task_lists[list_num].state);
+    let inner_area = shrink_rect(chunk, 1);
+
+    frame.render_stateful_widget(list, inner_area, &mut app.task_lists[list_num].state);
 }
 
 fn task_spans<'a>(task: &Task, width: u16) -> Vec<Spans<'a>> {
