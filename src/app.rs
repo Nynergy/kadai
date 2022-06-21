@@ -5,12 +5,14 @@ use crate::task_list::*;
 pub enum AppState {
     Tracker,
     TaskView,
+    BacklogPopup,
 }
 
 pub struct App {
     pub state: AppState,
     pub task_lists: Vec<TaskList>,
     pub active_list: usize,
+    pub backlog: TaskList,
     pub detail_scroll: u16,
 }
 
@@ -30,12 +32,16 @@ impl App {
                     .color_index(2),
             ],
             active_list: 0,
+            backlog: TaskList::new()
+                .name("Backlog".to_string())
+                .color_index(6),
             detail_scroll: 0,
         };
 
         for i in 0..app.task_lists.len() {
             app.task_lists[i].state.select(Some(0));
         }
+        app.backlog.state.select(Some(0));
 
         app
     }
