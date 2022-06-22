@@ -69,7 +69,13 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                     match key.code {
                         // TODO: Create task in current list
                         // TODO: Delete highlighted task
-                        // TODO: Edit highlighted task data
+                        KeyCode::Char('e') => {
+                            if !app.focused_list_is_empty() {
+                                app.populate_task_detail_inputs();
+                                app.reset_active_detail_input();
+                                app.change_state(AppState::EditTask);
+                            }
+                        },
                         // TODO: Add new list
                         // TODO: Delete focused list
                         // TODO: Rename focused list
@@ -103,6 +109,7 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                             app.reset_scroll();
                             app.change_state(AppState::Tracker);
                         },
+                        // TODO: Switch to BacklogPopup/ArchivePopup
                         _ => {}
                     }
                 },
@@ -119,6 +126,7 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                         KeyCode::Char('C') => app.cycle_list_color(-1),
                         KeyCode::Char('b') => app.change_state(AppState::Tracker),
                         KeyCode::Char('a') => app.change_state(AppState::ArchivePopup),
+                        // TODO: View highlighted task details
                         _ => {}
                     }
                 },
@@ -136,6 +144,20 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                         KeyCode::Char('C') => app.cycle_list_color(-1),
                         KeyCode::Char('a') => app.change_state(AppState::Tracker),
                         KeyCode::Char('b') => app.change_state(AppState::BacklogPopup),
+                        // TODO: View highlighted task details
+                        _ => {}
+                    }
+                },
+                AppState::EditTask => {
+                    match key.code {
+                        KeyCode::Char(c) => app.add_to_detail_input(c),
+                        KeyCode::Backspace => app.delete_from_detail_input(),
+                        KeyCode::Tab => app.next_detail_input(),
+                        KeyCode::Enter => {
+                            app.save_details_to_task();
+                            app.change_state(AppState::Tracker);
+                        }
+                        KeyCode::Esc => app.change_state(AppState::Tracker),
                         _ => {}
                     }
                 },

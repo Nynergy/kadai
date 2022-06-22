@@ -7,6 +7,7 @@ pub enum AppState {
     TaskView,
     BacklogPopup,
     ArchivePopup,
+    EditTask,
 }
 
 pub struct App {
@@ -16,6 +17,8 @@ pub struct App {
     pub backlog: TaskList,
     pub archive: TaskList,
     pub detail_scroll: u16,
+    pub task_detail_inputs: Vec<String>,
+    pub active_detail_input: usize,
 }
 
 impl App {
@@ -27,6 +30,8 @@ impl App {
             backlog: read_backlog_file().unwrap(),
             archive: read_archive_file().unwrap(),
             detail_scroll: 0,
+            task_detail_inputs: vec![String::new(); 3],
+            active_detail_input: 0,
         };
 
         for i in 0..app.task_lists.len() {
@@ -281,6 +286,74 @@ impl App {
         save_backlog_file(&self.backlog)?;
         save_archive_file(&self.archive)?;
         Ok(())
+    }
+
+    pub fn populate_task_detail_inputs(&mut self) {
+        if let Some(task) = self.get_selected_task() {
+            let description: String;
+            match &task.description {
+                Some(d) => description = d.to_string(),
+                None => description = String::new()
+            }
+            let category: String;
+            match &task.category {
+                Some(c) => category = c.to_string(),
+                None => category = String::new()
+            }
+
+            self.task_detail_inputs[0] = task.summary.clone();
+            self.task_detail_inputs[1] = description;
+            self.task_detail_inputs[2] = category;
+        }
+    }
+
+    pub fn add_to_detail_input(&mut self, c: char) {
+        self.task_detail_inputs[self.active_detail_input].push(c);
+    }
+
+    pub fn delete_from_detail_input(&mut self) {
+        self.task_detail_inputs[self.active_detail_input].pop();
+    }
+
+    pub fn next_detail_input(&mut self) {
+        self.active_detail_input += 1;
+        self.active_detail_input %= 3;
+    }
+
+    pub fn reset_active_detail_input(&mut self) {
+        self.active_detail_input = 0;
+    }
+
+    pub fn save_details_to_task(&mut self) {
+        let summary = self.task_detail_inputs[0].drain(..).collect();
+        let desc = self.task_detail_inputs[1].drain(..).collect();
+        let cat = self.task_detail_inputs[2].drain(..).collect();
+
+        let description: Option<String>;
+        if desc == "" {
+            description = None;
+        } else {
+            description = Some(desc);
+        }
+
+        let category: Option<String>;
+        if cat == "" {
+            category = None;
+        } else {
+            category = Some(cat);
+        }
+
+        let updated_task = Task {
+            summary,
+            description,
+            category,
+        };
+
+        let list = &mut self.task_lists[self.active_list];
+        if let Some(i) = list.state.selected() {
+            list.tasks.remove(i);
+            list.tasks.insert(i, updated_task);
+        }
     }
 }
 

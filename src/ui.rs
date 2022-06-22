@@ -106,6 +106,10 @@ pub fn ui<B: Backend>(frame: &mut Frame<B>, app: &mut App) {
             render_tracker(frame, app);
             render_archive_popup(frame, app);
         },
+        AppState::EditTask => {
+            render_tracker(frame, app);
+            render_task_editor(frame, app, "Edit Task Details".to_string());
+        },
     }
 }
 
@@ -353,6 +357,116 @@ fn render_archive_popup<B: Backend>(
     let inner_area = shrink_rect(chunks[1], 1);
 
     frame.render_stateful_widget(list, inner_area, &mut app.archive.state);
+}
+
+fn render_task_editor<B: Backend>(
+    frame: &mut Frame<B>,
+    app: &mut App,
+    editor_title: String,
+) {
+    if let Some(_task) = app.get_selected_task() {
+        let size = frame.size();
+        let area = centered_rect(60, 40, size);
+        let area_block = Block::default()
+            .title(
+                Span::styled(
+                    editor_title,
+                    Style::default()
+                    .add_modifier(Modifier::BOLD)
+                )
+            )
+            .title_alignment(Alignment::Center)
+            .borders(Borders::ALL)
+            .border_type(BorderType::Double);
+
+        frame.render_widget(Clear, area); // Clear the area first
+        frame.render_widget(area_block, area);
+
+        let inner_area = shrink_rect(area, 1);
+
+        let chunks = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints(
+                [
+                Constraint::Length(3),
+                Constraint::Min(3),
+                Constraint::Length(3),
+                Constraint::Length(1),
+                ]
+                .as_ref()
+            )
+            .split(inner_area);
+
+        let summary = Paragraph::new(app.task_detail_inputs[0].clone())
+            .style(
+                if app.active_detail_input == 0 {
+                    Style::default().fg(Color::Red)
+                } else {
+                    Style::default()
+                }
+            )
+            .block(
+                Block::default()
+                .borders(Borders::ALL)
+                .title("Summary")
+            )
+            .wrap(Wrap { trim: true });
+
+        frame.render_widget(summary, chunks[0]);
+
+        let description = Paragraph::new(app.task_detail_inputs[1].clone())
+            .style(
+                if app.active_detail_input == 1 {
+                    Style::default().fg(Color::Red)
+                } else {
+                    Style::default()
+                }
+            )
+            .block(
+                Block::default()
+                .borders(Borders::ALL)
+                .title("Description")
+            )
+            .wrap(Wrap { trim: true });
+
+        frame.render_widget(description, chunks[1]);
+
+        let category = Paragraph::new(app.task_detail_inputs[2].clone())
+            .style(
+                if app.active_detail_input == 2 {
+                    Style::default().fg(Color::Red)
+                } else {
+                    Style::default()
+                }
+            )
+            .block(
+                Block::default()
+                .borders(Borders::ALL)
+                .title("Category")
+            )
+            .wrap(Wrap { trim: true });
+
+        frame.render_widget(category, chunks[2]);
+
+        let i = app.active_detail_input;
+        frame.set_cursor(
+            chunks[i].x + app.task_detail_inputs[i].len() as u16 + 1,
+            chunks[i].y + 1
+        );
+
+        let info = Paragraph::new(
+            Span::styled(
+                "Press Enter to Save Changes, Esc to Exit, Tab to Cycle Focus",
+                Style::default()
+                .fg(Color::Red)
+                .add_modifier(Modifier::BOLD)
+            ))
+            .block(Block::default())
+            .wrap(Wrap { trim: true })
+            .alignment(Alignment::Center);
+
+        frame.render_widget(info, chunks[3]);
+    }
 }
 
 fn render_task_list<B: Backend>(
