@@ -47,7 +47,17 @@ impl App {
     }
 
     pub fn list_down(&mut self) {
-        let list = &mut self.task_lists[self.active_list];
+        let list: &mut TaskList;
+
+        match self.state {
+            AppState::Tracker => {
+                list = &mut self.task_lists[self.active_list];
+            },
+            AppState::BacklogPopup => {
+                list = &mut self.backlog;
+            },
+            _ => return
+        }
 
         if !list.tasks.is_empty() {
             let i = match list.state.selected() {
@@ -65,7 +75,17 @@ impl App {
     }
 
     pub fn list_up(&mut self) {
-        let list = &mut self.task_lists[self.active_list];
+        let list: &mut TaskList;
+
+        match self.state {
+            AppState::Tracker => {
+                list = &mut self.task_lists[self.active_list];
+            },
+            AppState::BacklogPopup => {
+                list = &mut self.backlog;
+            },
+            _ => return
+        }
 
         if !list.tasks.is_empty() {
             let i = match list.state.selected() {
@@ -142,6 +162,56 @@ impl App {
         }
     }
 
+    pub fn move_task_to_list(&mut self, index: usize) {
+        if index >= self.task_lists.len() {
+            return;
+        }
+
+        match self.state {
+            AppState::BacklogPopup => {
+                let list = &mut self.backlog;
+                if let Some(i) = list.state.selected() {
+                    let task = list.tasks.remove(i);
+                    if list.tasks.len() == 0 {
+                        list.state.select(None);
+                    } else if i == list.tasks.len() {
+                        list.state.select(Some(i - 1));
+                    }
+
+                    let dest = &mut self.task_lists[index];
+                    dest.tasks.push(task);
+                    if dest.tasks.len() == 1 {
+                        dest.state.select(Some(0));
+                    }
+                }
+            },
+            _ => {}
+        }
+    }
+
+    pub fn move_task_to_backlog(&mut self) {
+        match self.state {
+            AppState::Tracker => {
+                let list = &mut self.task_lists[self.active_list];
+                if let Some(i) = list.state.selected() {
+                    let task = list.tasks.remove(i);
+                    if list.tasks.len() == 0 {
+                        list.state.select(None);
+                    } else if i == list.tasks.len() {
+                        list.state.select(Some(i - 1));
+                    }
+
+                    let dest = &mut self.backlog;
+                    dest.tasks.push(task);
+                    if dest.tasks.len() == 1 {
+                        dest.state.select(Some(0));
+                    }
+                }
+            },
+            _ => {}
+        }
+    }
+
     pub fn change_state(&mut self, state: AppState) {
         self.state = state;
     }
@@ -171,7 +241,18 @@ impl App {
     }
 
     pub fn cycle_list_color(&mut self, amount: i8) {
-        let list = &mut self.task_lists[self.active_list];
+        let list: &mut TaskList;
+
+        match self.state {
+            AppState::Tracker => {
+                list = &mut self.task_lists[self.active_list];
+            },
+            AppState::BacklogPopup => {
+                list = &mut self.backlog;
+            },
+            _ => return
+        }
+
         let mut new_color = list.color_index as i8 + amount;
         if new_color < 1 {
             new_color = 7;

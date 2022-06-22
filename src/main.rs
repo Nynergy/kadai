@@ -82,11 +82,13 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                             }
                         },
                         KeyCode::Char('b') => app.change_state(AppState::BacklogPopup),
+                        KeyCode::Char('B') => app.move_task_to_backlog(),
                         _ => {}
                     }
                 },
                 AppState::TaskView => {
                     match key.code {
+                        KeyCode::Char('q') => return Ok(()),
                         KeyCode::Char('j') => app.scroll_details(1),
                         KeyCode::Char('k') => app.scroll_details(-1),
                         KeyCode::Enter => {
@@ -98,9 +100,12 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                 },
                 AppState::BacklogPopup => {
                     match key.code {
-                        // TODO: Scroll through backlog
-                        // TODO: Add highlighted task to first tracker list
-                        // TODO: Cycle backlog list color
+                        KeyCode::Char('q') => return Ok(()),
+                        KeyCode::Char('j') => app.list_down(),
+                        KeyCode::Char('k') => app.list_up(),
+                        KeyCode::Char(' ') => app.move_task_to_list(0),
+                        KeyCode::Char('c') => app.cycle_list_color(1),
+                        KeyCode::Char('C') => app.cycle_list_color(-1),
                         KeyCode::Char('b') => app.change_state(AppState::Tracker),
                         _ => {}
                     }
