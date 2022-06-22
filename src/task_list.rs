@@ -34,6 +34,7 @@ pub struct TaskList {
 }
 
 impl TaskList {
+    // TODO: No hardcoded tasks, set them using TaskList::tasks()
     pub fn new() -> Self {
         Self {
             name: "".to_string(),

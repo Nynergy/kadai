@@ -83,6 +83,8 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                         },
                         KeyCode::Char('b') => app.change_state(AppState::BacklogPopup),
                         KeyCode::Char('B') => app.move_task_to_backlog(),
+                        KeyCode::Char('a') => app.change_state(AppState::ArchivePopup),
+                        KeyCode::Char('A') => app.move_task_to_archive(),
                         _ => {}
                     }
                 },
@@ -107,6 +109,23 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                         KeyCode::Char('c') => app.cycle_list_color(1),
                         KeyCode::Char('C') => app.cycle_list_color(-1),
                         KeyCode::Char('b') => app.change_state(AppState::Tracker),
+                        KeyCode::Char('a') => app.change_state(AppState::ArchivePopup),
+                        _ => {}
+                    }
+                },
+                AppState::ArchivePopup => {
+                    match key.code {
+                        KeyCode::Char('q') => return Ok(()),
+                        KeyCode::Char('j') => app.list_down(),
+                        KeyCode::Char('k') => app.list_up(),
+                        KeyCode::Char(' ') => {
+                            let dest_index = app.task_lists.len() - 1;
+                            app.move_task_to_list(dest_index);
+                        },
+                        KeyCode::Char('c') => app.cycle_list_color(1),
+                        KeyCode::Char('C') => app.cycle_list_color(-1),
+                        KeyCode::Char('a') => app.change_state(AppState::Tracker),
+                        KeyCode::Char('b') => app.change_state(AppState::BacklogPopup),
                         _ => {}
                     }
                 },

@@ -102,6 +102,10 @@ pub fn ui<B: Backend>(frame: &mut Frame<B>, app: &mut App) {
             render_tracker(frame, app);
             render_backlog_popup(frame, app);
         },
+        AppState::ArchivePopup => {
+            render_tracker(frame, app);
+            render_archive_popup(frame, app);
+        },
     }
 }
 
@@ -289,6 +293,67 @@ fn render_backlog_popup<B: Backend>(
     let inner_area = shrink_rect(chunks[1], 1);
 
     frame.render_stateful_widget(list, inner_area, &mut app.backlog.state);
+}
+
+fn render_archive_popup<B: Backend>(
+    frame: &mut Frame<B>,
+    app: &mut App
+) {
+    let size = frame.size();
+
+    let chunks = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints(
+            [
+            Constraint::Percentage(50),
+            Constraint::Percentage(50),
+            ]
+            .as_ref()
+        )
+        .split(size);
+
+    let container = CustomBorder::new()
+        .title(app.archive.name.clone())
+        .title_style(
+            Style::default()
+            .fg(
+                Color::Indexed(
+                    app.archive.color_index
+                )
+            )
+            .add_modifier(Modifier::BOLD)
+        )
+        .border_style(
+            Style::default()
+            .fg(
+                Color::Indexed(
+                    app.archive.color_index
+                )
+            )
+        );
+
+    frame.render_widget(Clear, chunks[1]); // Clear the area first
+    frame.render_widget(container, chunks[1]);
+
+    let items: Vec<ListItem> = app
+        .archive
+        .tasks
+        .iter()
+        .map(|i| {
+            ListItem::new(task_spans(i, chunks[1].width - 2))
+        })
+        .collect();
+
+    let list = List::new(items)
+        .block(Block::default())
+        .highlight_style(
+            Style::default()
+            .add_modifier(Modifier::REVERSED)
+        );
+
+    let inner_area = shrink_rect(chunks[1], 1);
+
+    frame.render_stateful_widget(list, inner_area, &mut app.archive.state);
 }
 
 fn render_task_list<B: Backend>(

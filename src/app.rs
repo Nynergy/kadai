@@ -6,6 +6,7 @@ pub enum AppState {
     Tracker,
     TaskView,
     BacklogPopup,
+    ArchivePopup,
 }
 
 pub struct App {
@@ -13,10 +14,12 @@ pub struct App {
     pub task_lists: Vec<TaskList>,
     pub active_list: usize,
     pub backlog: TaskList,
+    pub archive: TaskList,
     pub detail_scroll: u16,
 }
 
 impl App {
+    // TODO: Read app data from external file
     pub fn new() -> Self {
         let mut app = Self {
             state: AppState::Tracker,
@@ -35,6 +38,9 @@ impl App {
             backlog: TaskList::new()
                 .name("Backlog".to_string())
                 .color_index(6),
+            archive: TaskList::new()
+                .name("Archive".to_string())
+                .color_index(1),
             detail_scroll: 0,
         };
 
@@ -42,6 +48,7 @@ impl App {
             app.task_lists[i].state.select(Some(0));
         }
         app.backlog.state.select(Some(0));
+        app.archive.state.select(Some(0));
 
         app
     }
@@ -53,9 +60,8 @@ impl App {
             AppState::Tracker => {
                 list = &mut self.task_lists[self.active_list];
             },
-            AppState::BacklogPopup => {
-                list = &mut self.backlog;
-            },
+            AppState::BacklogPopup => list = &mut self.backlog,
+            AppState::ArchivePopup => list = &mut self.archive,
             _ => return
         }
 
@@ -81,9 +87,8 @@ impl App {
             AppState::Tracker => {
                 list = &mut self.task_lists[self.active_list];
             },
-            AppState::BacklogPopup => {
-                list = &mut self.backlog;
-            },
+            AppState::BacklogPopup => list = &mut self.backlog,
+            AppState::ArchivePopup => list = &mut self.archive,
             _ => return
         }
 
@@ -167,25 +172,27 @@ impl App {
             return;
         }
 
-        match self.state {
-            AppState::BacklogPopup => {
-                let list = &mut self.backlog;
-                if let Some(i) = list.state.selected() {
-                    let task = list.tasks.remove(i);
-                    if list.tasks.len() == 0 {
-                        list.state.select(None);
-                    } else if i == list.tasks.len() {
-                        list.state.select(Some(i - 1));
-                    }
+        let list: &mut TaskList;
 
-                    let dest = &mut self.task_lists[index];
-                    dest.tasks.push(task);
-                    if dest.tasks.len() == 1 {
-                        dest.state.select(Some(0));
-                    }
-                }
-            },
-            _ => {}
+        match self.state {
+            AppState::BacklogPopup => list = &mut self.backlog,
+            AppState::ArchivePopup => list = &mut self.archive,
+            _ => return
+        }
+
+        if let Some(i) = list.state.selected() {
+            let task = list.tasks.remove(i);
+            if list.tasks.len() == 0 {
+                list.state.select(None);
+            } else if i == list.tasks.len() {
+                list.state.select(Some(i - 1));
+            }
+
+            let dest = &mut self.task_lists[index];
+            dest.tasks.push(task);
+            if dest.tasks.len() == 1 {
+                dest.state.select(Some(0));
+            }
         }
     }
 
@@ -202,6 +209,29 @@ impl App {
                     }
 
                     let dest = &mut self.backlog;
+                    dest.tasks.push(task);
+                    if dest.tasks.len() == 1 {
+                        dest.state.select(Some(0));
+                    }
+                }
+            },
+            _ => {}
+        }
+    }
+
+    pub fn move_task_to_archive(&mut self) {
+        match self.state {
+            AppState::Tracker => {
+                let list = &mut self.task_lists[self.active_list];
+                if let Some(i) = list.state.selected() {
+                    let task = list.tasks.remove(i);
+                    if list.tasks.len() == 0 {
+                        list.state.select(None);
+                    } else if i == list.tasks.len() {
+                        list.state.select(Some(i - 1));
+                    }
+
+                    let dest = &mut self.archive;
                     dest.tasks.push(task);
                     if dest.tasks.len() == 1 {
                         dest.state.select(Some(0));
@@ -247,9 +277,8 @@ impl App {
             AppState::Tracker => {
                 list = &mut self.task_lists[self.active_list];
             },
-            AppState::BacklogPopup => {
-                list = &mut self.backlog;
-            },
+            AppState::BacklogPopup => list = &mut self.backlog,
+            AppState::ArchivePopup => list = &mut self.archive,
             _ => return
         }
 
