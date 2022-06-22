@@ -57,6 +57,7 @@ impl CustomBorder {
 
 impl Widget for CustomBorder {
     fn render(self, area: Rect, buf: &mut Buffer) {
+        // Border Lines
         let mut line = String::new();
         line.push_str(line::VERTICAL_RIGHT);
         for _ in 0..area.width - 2 {
@@ -66,10 +67,25 @@ impl Widget for CustomBorder {
         buf.set_string(area.left(), area.top(), line.clone(), self.border_style);
         buf.set_string(area.left(), area.bottom() - 1, line, self.border_style);
 
+        // Title
         let offset = area.width / 2 - self.title.len() as u16 / 2;
         let title_x = area.left() + offset;
         let title_y = area.y;
-        buf.set_string(title_x, title_y, self.title, self.title_style);
+        buf.set_string(title_x, title_y, self.title.clone(), self.title_style);
+
+        // Title Tee's
+        buf.set_string(
+            title_x - 1,
+            area.top(),
+            line::VERTICAL_LEFT,
+            self.border_style
+        );
+        buf.set_string(
+            title_x + self.title.len() as u16,
+            area.top(),
+            line::VERTICAL_RIGHT,
+            self.border_style
+        );
     }
 }
 
@@ -251,6 +267,7 @@ fn render_backlog_popup<B: Backend>(
             )
         );
 
+    frame.render_widget(Clear, chunks[1]); // Clear the area first
     frame.render_widget(container, chunks[1]);
 
     let items: Vec<ListItem> = app
