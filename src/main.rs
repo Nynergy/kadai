@@ -67,7 +67,13 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
             match app.state {
                 AppState::Tracker => {
                     match key.code {
-                        KeyCode::Char('q') => return Ok(()),
+                        // TODO: Create task in current list
+                        // TODO: Delete highlighted task
+                        // TODO: Edit highlighted task data
+                        // TODO: Add new list
+                        // TODO: Delete focused list
+                        // TODO: Rename focused list
+                        KeyCode::Char('q') => break,
                         KeyCode::Char('j') => app.list_down(),
                         KeyCode::Char('k') => app.list_up(),
                         KeyCode::Char('h') => app.prev_list(),
@@ -90,7 +96,7 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                 },
                 AppState::TaskView => {
                     match key.code {
-                        KeyCode::Char('q') => return Ok(()),
+                        KeyCode::Char('q') => break,
                         KeyCode::Char('j') => app.scroll_details(1),
                         KeyCode::Char('k') => app.scroll_details(-1),
                         KeyCode::Enter => {
@@ -102,7 +108,10 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                 },
                 AppState::BacklogPopup => {
                     match key.code {
-                        KeyCode::Char('q') => return Ok(()),
+                        // TODO: Create task in backlog
+                        // TODO: Delete highlighted task
+                        // TODO: Edit highlighted task data
+                        KeyCode::Char('q') => break,
                         KeyCode::Char('j') => app.list_down(),
                         KeyCode::Char('k') => app.list_up(),
                         KeyCode::Char(' ') => app.move_task_to_list(0),
@@ -115,7 +124,8 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                 },
                 AppState::ArchivePopup => {
                     match key.code {
-                        KeyCode::Char('q') => return Ok(()),
+                        // TODO: Delete highlighted task
+                        KeyCode::Char('q') => break,
                         KeyCode::Char('j') => app.list_down(),
                         KeyCode::Char('k') => app.list_up(),
                         KeyCode::Char(' ') => {
@@ -132,4 +142,8 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
             }
         }
     }
+
+    app.save_changes()?;
+
+    Ok(())
 }

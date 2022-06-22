@@ -1,4 +1,4 @@
-use std::cmp;
+use std::{cmp, fs};
 
 use crate::task_list::*;
 
@@ -19,28 +19,13 @@ pub struct App {
 }
 
 impl App {
-    // TODO: Read app data from external file
     pub fn new() -> Self {
         let mut app = Self {
             state: AppState::Tracker,
-            task_lists: vec![
-                TaskList::new()
-                    .name("Planned".to_string())
-                    .color_index(5),
-                TaskList::new()
-                    .name("In Progress".to_string())
-                    .color_index(3),
-                TaskList::new()
-                    .name("Completed".to_string())
-                    .color_index(2),
-            ],
+            task_lists: read_tracker_file().unwrap(),
             active_list: 0,
-            backlog: TaskList::new()
-                .name("Backlog".to_string())
-                .color_index(6),
-            archive: TaskList::new()
-                .name("Archive".to_string())
-                .color_index(1),
+            backlog: read_backlog_file().unwrap(),
+            archive: read_archive_file().unwrap(),
             detail_scroll: 0,
         };
 
@@ -290,4 +275,47 @@ impl App {
         }
         list.color_index = new_color as u8;
     }
+
+    pub fn save_changes(&self) -> Result<(), std::io::Error> {
+        save_tracker_file(&self.task_lists)?;
+        save_backlog_file(&self.backlog)?;
+        save_archive_file(&self.archive)?;
+        Ok(())
+    }
+}
+
+fn read_tracker_file() -> Result<Vec<TaskList>, std::io::Error> {
+    let file_contents = fs::read_to_string("./tracker.json")?;
+    let parsed: Vec<TaskList> = serde_json::from_str(&file_contents)?;
+    Ok(parsed)
+}
+
+fn read_backlog_file() -> Result<TaskList, std::io::Error> {
+    let file_contents = fs::read_to_string("./backlog.json")?;
+    let parsed: TaskList = serde_json::from_str(&file_contents)?;
+    Ok(parsed)
+}
+
+fn read_archive_file() -> Result<TaskList, std::io::Error> {
+    let file_contents = fs::read_to_string("./archive.json")?;
+    let parsed: TaskList = serde_json::from_str(&file_contents)?;
+    Ok(parsed)
+}
+
+fn save_tracker_file(data: &Vec<TaskList>) -> Result<(), std::io::Error> {
+    let json_data = serde_json::to_string_pretty(data)?;
+    fs::write("./tracker.json", json_data)?;
+    Ok(())
+}
+
+fn save_backlog_file(data: &TaskList) -> Result<(), std::io::Error> {
+    let json_data = serde_json::to_string_pretty(data)?;
+    fs::write("./backlog.json", json_data)?;
+    Ok(())
+}
+
+fn save_archive_file(data: &TaskList) -> Result<(), std::io::Error> {
+    let json_data = serde_json::to_string_pretty(data)?;
+    fs::write("./archive.json", json_data)?;
+    Ok(())
 }

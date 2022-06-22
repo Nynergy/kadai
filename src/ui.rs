@@ -114,18 +114,17 @@ fn render_tracker<B: Backend>(
     app: &mut App
 ) {
     let size = frame.size();
-    let third = size.width / 3;
+    let list_width = size.width / app.task_lists.len() as u16;
+
+    let mut constraints: Vec<Constraint> = Vec::new();
+    for _ in 0..app.task_lists.len() - 1 {
+        constraints.push(Constraint::Length(list_width));
+    }
+    constraints.push(Constraint::Min(10));
 
     let chunks = Layout::default()
         .direction(Direction::Horizontal)
-        .constraints(
-            [
-            Constraint::Length(third),
-            Constraint::Min(10),
-            Constraint::Length(third),
-            ]
-            .as_ref()
-        )
+        .constraints(constraints.as_ref())
         .split(size);
 
     for i in 0..app.task_lists.len() {
