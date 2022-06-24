@@ -5,9 +5,12 @@ use crate::task_list::*;
 pub enum AppState {
     Tracker,
     TaskView,
+    BacklogTaskView,
+    ArchiveTaskView,
     BacklogPopup,
     ArchivePopup,
     EditTask,
+    EditBacklogTask,
 }
 
 pub struct App {
@@ -237,7 +240,19 @@ impl App {
     }
 
     pub fn get_selected_task(&self) -> Option<&Task> {
-        let list = &self.task_lists[self.active_list];
+        let list: &TaskList;
+
+        match self.state {
+            AppState::Tracker => list = &self.task_lists[self.active_list],
+            AppState::TaskView => list = &self.task_lists[self.active_list],
+            AppState::EditTask => list = &self.task_lists[self.active_list],
+            AppState::BacklogPopup => list = &self.backlog,
+            AppState::EditBacklogTask => list = &self.backlog,
+            AppState::BacklogTaskView => list = &self.backlog,
+            AppState::ArchivePopup => list = &self.archive,
+            AppState::ArchiveTaskView => list = &self.archive,
+        }
+
         match list.state.selected() {
             Some(i) => Some(&list.tasks[i]),
             None => None
@@ -245,7 +260,16 @@ impl App {
     }
 
     pub fn focused_list_is_empty(&self) -> bool {
-        self.task_lists[self.active_list].tasks.is_empty()
+        let list: &TaskList;
+
+        match self.state {
+            AppState::Tracker => list = &self.task_lists[self.active_list],
+            AppState::BacklogPopup => list = &self.backlog,
+            AppState::ArchivePopup => list = &self.archive,
+            _ => return true
+        }
+
+        list.tasks.is_empty()
     }
 
     pub fn scroll_details(&mut self, amount: i16) {
@@ -349,7 +373,14 @@ impl App {
             category,
         };
 
-        let list = &mut self.task_lists[self.active_list];
+        let list: &mut TaskList;
+
+        match self.state {
+            AppState::EditTask => list = &mut self.task_lists[self.active_list],
+            AppState::EditBacklogTask => list = &mut self.backlog,
+            _ => return
+        }
+
         if let Some(i) = list.state.selected() {
             list.tasks.remove(i);
             list.tasks.insert(i, updated_task);

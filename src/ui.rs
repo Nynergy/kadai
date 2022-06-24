@@ -98,6 +98,16 @@ pub fn ui<B: Backend>(frame: &mut Frame<B>, app: &mut App) {
             render_tracker(frame, app);
             render_task_data(frame, app);
         },
+        AppState::BacklogTaskView => {
+            render_tracker(frame, app);
+            render_backlog_popup(frame, app);
+            render_task_data(frame, app);
+        },
+        AppState::ArchiveTaskView => {
+            render_tracker(frame, app);
+            render_archive_popup(frame, app);
+            render_task_data(frame, app);
+        },
         AppState::BacklogPopup => {
             render_tracker(frame, app);
             render_backlog_popup(frame, app);
@@ -108,6 +118,11 @@ pub fn ui<B: Backend>(frame: &mut Frame<B>, app: &mut App) {
         },
         AppState::EditTask => {
             render_tracker(frame, app);
+            render_task_editor(frame, app, "Edit Task Details".to_string());
+        },
+        AppState::EditBacklogTask => {
+            render_tracker(frame, app);
+            render_backlog_popup(frame, app);
             render_task_editor(frame, app, "Edit Task Details".to_string());
         },
     }
