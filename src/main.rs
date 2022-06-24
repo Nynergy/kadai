@@ -72,7 +72,11 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                             app.reset_active_detail_input();
                             app.change_state(AppState::CreateTask);
                         },
-                        // TODO: Delete highlighted task
+                        KeyCode::Char('d') => {
+                            if !app.focused_list_is_empty() {
+                                app.change_state(AppState::DeleteTaskPrompt);
+                            }
+                        },
                         KeyCode::Char('e') => {
                             if !app.focused_list_is_empty() {
                                 app.populate_task_detail_inputs();
@@ -147,7 +151,11 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                             app.reset_active_detail_input();
                             app.change_state(AppState::CreateBacklogTask);
                         },
-                        // TODO: Delete highlighted task
+                        KeyCode::Char('d') => {
+                            if !app.focused_list_is_empty() {
+                                app.change_state(AppState::DeleteBacklogTaskPrompt);
+                            }
+                        },
                         KeyCode::Char('e') => {
                             if !app.focused_list_is_empty() {
                                 app.populate_task_detail_inputs();
@@ -173,7 +181,11 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                 },
                 AppState::ArchivePopup => {
                     match key.code {
-                        // TODO: Delete highlighted task
+                        KeyCode::Char('d') => {
+                            if !app.focused_list_is_empty() {
+                                app.change_state(AppState::DeleteArchiveTaskPrompt);
+                            }
+                        },
                         KeyCode::Char('q') => break,
                         KeyCode::Char('j') => app.list_down(),
                         KeyCode::Char('k') => app.list_up(),
@@ -242,6 +254,51 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                             app.change_state(AppState::BacklogPopup);
                         }
                         KeyCode::Esc => app.change_state(AppState::BacklogPopup),
+                        _ => {}
+                    }
+                },
+                AppState::DeleteTaskPrompt => {
+                    match key.code {
+                        KeyCode::Char('y') => {
+                            app.delete_highlighted_task();
+                            app.change_state(AppState::Tracker);
+                        },
+                        KeyCode::Char('n') => app.change_state(AppState::Tracker),
+                        KeyCode::Enter => {
+                            app.delete_highlighted_task();
+                            app.change_state(AppState::Tracker);
+                        },
+                        KeyCode::Esc => app.change_state(AppState::Tracker),
+                        _ => {}
+                    }
+                },
+                AppState::DeleteBacklogTaskPrompt => {
+                    match key.code {
+                        KeyCode::Char('y') => {
+                            app.delete_highlighted_task();
+                            app.change_state(AppState::BacklogPopup);
+                        },
+                        KeyCode::Char('n') => app.change_state(AppState::BacklogPopup),
+                        KeyCode::Enter => {
+                            app.delete_highlighted_task();
+                            app.change_state(AppState::BacklogPopup);
+                        },
+                        KeyCode::Esc => app.change_state(AppState::BacklogPopup),
+                        _ => {}
+                    }
+                },
+                AppState::DeleteArchiveTaskPrompt => {
+                    match key.code {
+                        KeyCode::Char('y') => {
+                            app.delete_highlighted_task();
+                            app.change_state(AppState::ArchivePopup);
+                        },
+                        KeyCode::Char('n') => app.change_state(AppState::ArchivePopup),
+                        KeyCode::Enter => {
+                            app.delete_highlighted_task();
+                            app.change_state(AppState::ArchivePopup);
+                        },
+                        KeyCode::Esc => app.change_state(AppState::ArchivePopup),
                         _ => {}
                     }
                 },

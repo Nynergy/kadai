@@ -134,6 +134,20 @@ pub fn ui<B: Backend>(frame: &mut Frame<B>, app: &mut App) {
             render_backlog_popup(frame, app);
             render_task_editor(frame, app, "Create New Backlog Task".to_string());
         },
+        AppState::DeleteTaskPrompt => {
+            render_tracker(frame, app);
+            render_prompt(frame, app, "Delete Highlighted Task?".to_string());
+        },
+        AppState::DeleteBacklogTaskPrompt => {
+            render_tracker(frame, app);
+            render_backlog_popup(frame, app);
+            render_prompt(frame, app, "Delete Highlighted Backlog Task?".to_string());
+        },
+        AppState::DeleteArchiveTaskPrompt => {
+            render_tracker(frame, app);
+            render_archive_popup(frame, app);
+            render_prompt(frame, app, "Delete Highlighted Archive Task?".to_string());
+        },
     }
 }
 
@@ -491,6 +505,62 @@ fn render_task_editor<B: Backend>(
     frame.render_widget(info, chunks[3]);
 }
 
+fn render_prompt<B: Backend>(
+    frame: &mut Frame<B>,
+    _app: &mut App,
+    prompt: String,
+) {
+    let size = frame.size();
+    let area = centered_fixed_size_rect(prompt.len() + 6, 7, size);
+    let area_block = Block::default()
+        .borders(Borders::ALL)
+        .border_type(BorderType::Double);
+
+    frame.render_widget(Clear, area); // Clear the area first
+    frame.render_widget(area_block, area);
+
+    let inner_area = shrink_rect(area, 1);
+
+    let chunks = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints(
+            [
+            Constraint::Length(1),
+            ]
+            .as_ref()
+        )
+        .split(inner_area);
+
+    let text = vec![
+        Spans::from(
+            Span::raw("")
+        ),
+        Spans::from(
+            Span::styled(
+                prompt,
+                Style::default()
+                .add_modifier(Modifier::BOLD)
+            )
+        ),
+        Spans::from(
+            Span::raw("")
+        ),
+        Spans::from(
+            Span::styled(
+                "(Y)es (N)o",
+                Style::default()
+                .add_modifier(Modifier::BOLD)
+            )
+        ),
+        ];
+    let text = Paragraph::new(text)
+        .block(Block::default())
+        .wrap(Wrap { trim: true })
+        .alignment(Alignment::Center);
+
+    frame.render_widget(text, chunks[0]);
+}
+
 fn render_task_list<B: Backend>(
     frame: &mut Frame<B>,
     app: &mut App,
@@ -692,6 +762,34 @@ fn centered_rect(percent_x: usize, percent_y: usize, size: Rect) -> Rect {
                 Constraint::Percentage((100 - percent_x) as u16 / 2),
                 Constraint::Percentage(percent_x as u16),
                 Constraint::Percentage((100 - percent_x) as u16 / 2),
+            ]
+            .as_ref(),
+        )
+        .split(popup_layout[1])[1];
+
+    popup_rect
+}
+
+fn centered_fixed_size_rect(width: usize, height: usize, size: Rect) -> Rect {
+    let popup_layout = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints(
+            [
+                Constraint::Length(size.height / 2 - height as u16 / 2),
+                Constraint::Min(height as u16),
+                Constraint::Length(size.height / 2 - height as u16 / 2),
+            ]
+            .as_ref(),
+        )
+        .split(size);
+
+    let popup_rect = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints(
+            [
+                Constraint::Length(size.width / 2 - width as u16 / 2),
+                Constraint::Min(width as u16),
+                Constraint::Length(size.width / 2 - width as u16 / 2),
             ]
             .as_ref(),
         )

@@ -2,17 +2,21 @@ use std::{cmp, fs};
 
 use crate::task_list::*;
 
+// TODO: Refactor states to include the previous state
 pub enum AppState {
     Tracker,
     TaskView,
-    BacklogTaskView,
-    ArchiveTaskView,
     BacklogPopup,
+    BacklogTaskView,
     ArchivePopup,
+    ArchiveTaskView,
     EditTask,
     EditBacklogTask,
     CreateTask,
     CreateBacklogTask,
+    DeleteTaskPrompt,
+    DeleteBacklogTaskPrompt,
+    DeleteArchiveTaskPrompt,
 }
 
 pub struct App {
@@ -255,12 +259,15 @@ impl App {
             AppState::TaskView => list = &self.task_lists[self.active_list],
             AppState::EditTask => list = &self.task_lists[self.active_list],
             AppState::CreateTask => list = &self.task_lists[self.active_list],
+            AppState::DeleteTaskPrompt => list = &self.task_lists[self.active_list],
             AppState::BacklogPopup => list = &self.backlog,
             AppState::EditBacklogTask => list = &self.backlog,
             AppState::BacklogTaskView => list = &self.backlog,
             AppState::CreateBacklogTask => list = &self.backlog,
+            AppState::DeleteBacklogTaskPrompt => list = &self.backlog,
             AppState::ArchivePopup => list = &self.archive,
             AppState::ArchiveTaskView => list = &self.archive,
+            AppState::DeleteArchiveTaskPrompt => list = &self.archive,
         }
 
         match list.state.selected() {
@@ -425,6 +432,26 @@ impl App {
     pub fn clear_detail_inputs(&mut self) {
         for i in 0..self.task_detail_inputs.len() {
             self.task_detail_inputs[i].clear();
+        }
+    }
+
+    pub fn delete_highlighted_task(&mut self) {
+        let list: &mut TaskList;
+
+        match self.state {
+            AppState::DeleteTaskPrompt => list = &mut self.task_lists[self.active_list],
+            AppState::DeleteBacklogTaskPrompt => list = &mut self.backlog,
+            AppState::DeleteArchiveTaskPrompt => list = &mut self.archive,
+            _ => return
+        }
+
+        if let Some(i) = list.state.selected() {
+            list.tasks.remove(i);
+            if list.tasks.is_empty() {
+                list.state.select(None);
+            } else if i >= list.tasks.len() {
+                list.state.select(Some(i - 1));
+            }
         }
     }
 }
