@@ -67,7 +67,11 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
             match app.state {
                 AppState::Tracker => {
                     match key.code {
-                        // TODO: Create task in current list
+                        KeyCode::Char('n') => {
+                            app.clear_detail_inputs();
+                            app.reset_active_detail_input();
+                            app.change_state(AppState::CreateTask);
+                        },
                         // TODO: Delete highlighted task
                         KeyCode::Char('e') => {
                             if !app.focused_list_is_empty() {
@@ -138,7 +142,11 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                 },
                 AppState::BacklogPopup => {
                     match key.code {
-                        // TODO: Create task in backlog
+                        KeyCode::Char('n') => {
+                            app.clear_detail_inputs();
+                            app.reset_active_detail_input();
+                            app.change_state(AppState::CreateBacklogTask);
+                        },
                         // TODO: Delete highlighted task
                         KeyCode::Char('e') => {
                             if !app.focused_list_is_empty() {
@@ -199,6 +207,32 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                     }
                 },
                 AppState::EditBacklogTask => {
+                    match key.code {
+                        KeyCode::Char(c) => app.add_to_detail_input(c),
+                        KeyCode::Backspace => app.delete_from_detail_input(),
+                        KeyCode::Tab => app.next_detail_input(),
+                        KeyCode::Enter => {
+                            app.save_details_to_task();
+                            app.change_state(AppState::BacklogPopup);
+                        }
+                        KeyCode::Esc => app.change_state(AppState::BacklogPopup),
+                        _ => {}
+                    }
+                },
+                AppState::CreateTask => {
+                    match key.code {
+                        KeyCode::Char(c) => app.add_to_detail_input(c),
+                        KeyCode::Backspace => app.delete_from_detail_input(),
+                        KeyCode::Tab => app.next_detail_input(),
+                        KeyCode::Enter => {
+                            app.save_details_to_task();
+                            app.change_state(AppState::Tracker);
+                        }
+                        KeyCode::Esc => app.change_state(AppState::Tracker),
+                        _ => {}
+                    }
+                },
+                AppState::CreateBacklogTask => {
                     match key.code {
                         KeyCode::Char(c) => app.add_to_detail_input(c),
                         KeyCode::Backspace => app.delete_from_detail_input(),

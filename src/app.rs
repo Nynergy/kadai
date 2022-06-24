@@ -11,6 +11,8 @@ pub enum AppState {
     ArchivePopup,
     EditTask,
     EditBacklogTask,
+    CreateTask,
+    CreateBacklogTask,
 }
 
 pub struct App {
@@ -38,10 +40,16 @@ impl App {
         };
 
         for i in 0..app.task_lists.len() {
-            app.task_lists[i].state.select(Some(0));
+            if !app.task_lists[i].tasks.is_empty() {
+                app.task_lists[i].state.select(Some(0));
+            }
         }
-        app.backlog.state.select(Some(0));
-        app.archive.state.select(Some(0));
+        if !app.backlog.tasks.is_empty() {
+            app.backlog.state.select(Some(0));
+        }
+        if !app.archive.tasks.is_empty() {
+            app.archive.state.select(Some(0));
+        }
 
         app
     }
@@ -246,9 +254,11 @@ impl App {
             AppState::Tracker => list = &self.task_lists[self.active_list],
             AppState::TaskView => list = &self.task_lists[self.active_list],
             AppState::EditTask => list = &self.task_lists[self.active_list],
+            AppState::CreateTask => list = &self.task_lists[self.active_list],
             AppState::BacklogPopup => list = &self.backlog,
             AppState::EditBacklogTask => list = &self.backlog,
             AppState::BacklogTaskView => list = &self.backlog,
+            AppState::CreateBacklogTask => list = &self.backlog,
             AppState::ArchivePopup => list = &self.archive,
             AppState::ArchiveTaskView => list = &self.archive,
         }
@@ -367,7 +377,7 @@ impl App {
             category = Some(cat);
         }
 
-        let updated_task = Task {
+        let new_task = Task {
             summary,
             description,
             category,
@@ -377,13 +387,44 @@ impl App {
 
         match self.state {
             AppState::EditTask => list = &mut self.task_lists[self.active_list],
+            AppState::CreateTask => list = &mut self.task_lists[self.active_list],
             AppState::EditBacklogTask => list = &mut self.backlog,
+            AppState::CreateBacklogTask => list = &mut self.backlog,
             _ => return
         }
 
-        if let Some(i) = list.state.selected() {
-            list.tasks.remove(i);
-            list.tasks.insert(i, updated_task);
+        match self.state {
+            AppState::EditTask => {
+                if let Some(i) = list.state.selected() {
+                    list.tasks.remove(i);
+                    list.tasks.insert(i, new_task);
+                }
+            },
+            AppState::EditBacklogTask => {
+                if let Some(i) = list.state.selected() {
+                    list.tasks.remove(i);
+                    list.tasks.insert(i, new_task);
+                }
+            },
+            AppState::CreateTask => {
+                list.tasks.push(new_task);
+                if list.tasks.len() == 1 {
+                    list.state.select(Some(0));
+                }
+            },
+            AppState::CreateBacklogTask => {
+                list.tasks.push(new_task);
+                if list.tasks.len() == 1 {
+                    list.state.select(Some(0));
+                }
+            },
+            _ => unreachable!()
+        }
+    }
+
+    pub fn clear_detail_inputs(&mut self) {
+        for i in 0..self.task_detail_inputs.len() {
+            self.task_detail_inputs[i].clear();
         }
     }
 }
