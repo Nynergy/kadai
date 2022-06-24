@@ -89,64 +89,34 @@ impl Widget for CustomBorder {
     }
 }
 
-pub fn ui<B: Backend>(frame: &mut Frame<B>, app: &mut App) {
-    match app.state {
+pub fn ui<B: Backend>(frame: &mut Frame<B>, app: &mut App, state: AppState) {
+    match state {
         AppState::Tracker => {
             render_tracker(frame, app);
         },
-        AppState::TaskView => {
-            render_tracker(frame, app);
+        AppState::TaskView(prev) => {
+            ui(frame, app, *prev);
             render_task_data(frame, app);
         },
-        AppState::BacklogTaskView => {
-            render_tracker(frame, app);
-            render_backlog_popup(frame, app);
-            render_task_data(frame, app);
-        },
-        AppState::ArchiveTaskView => {
-            render_tracker(frame, app);
-            render_archive_popup(frame, app);
-            render_task_data(frame, app);
-        },
-        AppState::BacklogPopup => {
-            render_tracker(frame, app);
+        AppState::BacklogPopup(prev) => {
+            ui(frame, app, *prev);
             render_backlog_popup(frame, app);
         },
-        AppState::ArchivePopup => {
-            render_tracker(frame, app);
+        AppState::ArchivePopup(prev) => {
+            ui(frame, app, *prev);
             render_archive_popup(frame, app);
         },
-        AppState::EditTask => {
-            render_tracker(frame, app);
+        AppState::EditTask(prev) => {
+            ui(frame, app, *prev);
             render_task_editor(frame, app, "Edit Task Details".to_string());
         },
-        AppState::EditBacklogTask => {
-            render_tracker(frame, app);
-            render_backlog_popup(frame, app);
-            render_task_editor(frame, app, "Edit Task Details".to_string());
-        },
-        AppState::CreateTask => {
-            render_tracker(frame, app);
+        AppState::CreateTask(prev) => {
+            ui(frame, app, *prev);
             render_task_editor(frame, app, "Create New Task".to_string());
         },
-        AppState::CreateBacklogTask => {
-            render_tracker(frame, app);
-            render_backlog_popup(frame, app);
-            render_task_editor(frame, app, "Create New Backlog Task".to_string());
-        },
-        AppState::DeleteTaskPrompt => {
-            render_tracker(frame, app);
+        AppState::DeleteTask(prev) => {
+            ui(frame, app, *prev);
             render_prompt(frame, app, "Delete Highlighted Task?".to_string());
-        },
-        AppState::DeleteBacklogTaskPrompt => {
-            render_tracker(frame, app);
-            render_backlog_popup(frame, app);
-            render_prompt(frame, app, "Delete Highlighted Backlog Task?".to_string());
-        },
-        AppState::DeleteArchiveTaskPrompt => {
-            render_tracker(frame, app);
-            render_archive_popup(frame, app);
-            render_prompt(frame, app, "Delete Highlighted Archive Task?".to_string());
         },
     }
 }

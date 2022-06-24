@@ -60,28 +60,29 @@ fn main() -> Result<(), Box<dyn Error>> {
 fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<()> {
     loop {
         // Render UI
-        terminal.draw(|frame| ui(frame, app))?;
+        terminal.draw(|frame| ui(frame, app, app.state.clone()))?;
 
         // Handle Events
         if let Event::Key(key) = event::read()? {
-            match app.state {
+            let state = app.state.clone();
+            match state {
                 AppState::Tracker => {
                     match key.code {
                         KeyCode::Char('n') => {
                             app.clear_detail_inputs();
                             app.reset_active_detail_input();
-                            app.change_state(AppState::CreateTask);
+                            app.change_state(AppState::CreateTask(Box::new(state)));
                         },
                         KeyCode::Char('d') => {
                             if !app.focused_list_is_empty() {
-                                app.change_state(AppState::DeleteTaskPrompt);
+                                app.change_state(AppState::DeleteTask(Box::new(state)));
                             }
                         },
                         KeyCode::Char('e') => {
                             if !app.focused_list_is_empty() {
                                 app.populate_task_detail_inputs();
                                 app.reset_active_detail_input();
-                                app.change_state(AppState::EditTask);
+                                app.change_state(AppState::EditTask(Box::new(state)));
                             }
                         },
                         // TODO: Add new list
@@ -98,69 +99,45 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                         KeyCode::Backspace => app.move_task_to_prev_list(),
                         KeyCode::Enter => {
                             if !app.focused_list_is_empty() {
-                                app.change_state(AppState::TaskView);
+                                app.change_state(AppState::TaskView(Box::new(state)));
                             }
                         },
-                        KeyCode::Char('b') => app.change_state(AppState::BacklogPopup),
+                        KeyCode::Char('b') => app.change_state(AppState::BacklogPopup(Box::new(state))),
                         KeyCode::Char('B') => app.move_task_to_backlog(),
-                        KeyCode::Char('a') => app.change_state(AppState::ArchivePopup),
+                        KeyCode::Char('a') => app.change_state(AppState::ArchivePopup(Box::new(state))),
                         KeyCode::Char('A') => app.move_task_to_archive(),
                         _ => {}
                     }
                 },
-                AppState::TaskView => {
+                AppState::TaskView(prev) => {
                     match key.code {
                         KeyCode::Char('q') => break,
                         KeyCode::Char('j') => app.scroll_details(1),
                         KeyCode::Char('k') => app.scroll_details(-1),
                         KeyCode::Enter => {
                             app.reset_scroll();
-                            app.change_state(AppState::Tracker);
+                            app.change_state(*prev);
                         },
                         _ => {}
                     }
                 },
-                AppState::BacklogTaskView => {
-                    match key.code {
-                        KeyCode::Char('q') => break,
-                        KeyCode::Char('j') => app.scroll_details(1),
-                        KeyCode::Char('k') => app.scroll_details(-1),
-                        KeyCode::Enter => {
-                            app.reset_scroll();
-                            app.change_state(AppState::BacklogPopup);
-                        },
-                        _ => {}
-                    }
-                },
-                AppState::ArchiveTaskView => {
-                    match key.code {
-                        KeyCode::Char('q') => break,
-                        KeyCode::Char('j') => app.scroll_details(1),
-                        KeyCode::Char('k') => app.scroll_details(-1),
-                        KeyCode::Enter => {
-                            app.reset_scroll();
-                            app.change_state(AppState::ArchivePopup);
-                        },
-                        _ => {}
-                    }
-                },
-                AppState::BacklogPopup => {
+                AppState::BacklogPopup(prev) => {
                     match key.code {
                         KeyCode::Char('n') => {
                             app.clear_detail_inputs();
                             app.reset_active_detail_input();
-                            app.change_state(AppState::CreateBacklogTask);
+                            app.change_state(AppState::CreateTask(Box::new(AppState::BacklogPopup(prev))));
                         },
                         KeyCode::Char('d') => {
                             if !app.focused_list_is_empty() {
-                                app.change_state(AppState::DeleteBacklogTaskPrompt);
+                                app.change_state(AppState::DeleteTask(Box::new(AppState::BacklogPopup(prev))));
                             }
                         },
                         KeyCode::Char('e') => {
                             if !app.focused_list_is_empty() {
                                 app.populate_task_detail_inputs();
                                 app.reset_active_detail_input();
-                                app.change_state(AppState::EditBacklogTask);
+                                app.change_state(AppState::EditTask(Box::new(AppState::BacklogPopup(prev))));
                             }
                         },
                         KeyCode::Char('q') => break,
@@ -169,21 +146,21 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                         KeyCode::Char(' ') => app.move_task_to_list(0),
                         KeyCode::Char('c') => app.cycle_list_color(1),
                         KeyCode::Char('C') => app.cycle_list_color(-1),
-                        KeyCode::Char('b') => app.change_state(AppState::Tracker),
-                        KeyCode::Char('a') => app.change_state(AppState::ArchivePopup),
+                        KeyCode::Char('b') => app.change_state(*prev),
+                        KeyCode::Char('a') => app.change_state(AppState::ArchivePopup(prev)),
                         KeyCode::Enter => {
                             if !app.focused_list_is_empty() {
-                                app.change_state(AppState::BacklogTaskView);
+                                app.change_state(AppState::TaskView(Box::new(AppState::BacklogPopup(prev))));
                             }
                         },
                         _ => {}
                     }
                 },
-                AppState::ArchivePopup => {
+                AppState::ArchivePopup(prev) => {
                     match key.code {
                         KeyCode::Char('d') => {
                             if !app.focused_list_is_empty() {
-                                app.change_state(AppState::DeleteArchiveTaskPrompt);
+                                app.change_state(AppState::DeleteTask(Box::new(AppState::ArchivePopup(prev))));
                             }
                         },
                         KeyCode::Char('q') => break,
@@ -195,110 +172,54 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                         },
                         KeyCode::Char('c') => app.cycle_list_color(1),
                         KeyCode::Char('C') => app.cycle_list_color(-1),
-                        KeyCode::Char('a') => app.change_state(AppState::Tracker),
-                        KeyCode::Char('b') => app.change_state(AppState::BacklogPopup),
+                        KeyCode::Char('a') => app.change_state(*prev),
+                        KeyCode::Char('b') => app.change_state(AppState::BacklogPopup(prev)),
                         KeyCode::Enter => {
                             if !app.focused_list_is_empty() {
-                                app.change_state(AppState::ArchiveTaskView);
+                                app.change_state(AppState::TaskView(Box::new(AppState::ArchivePopup(prev))));
                             }
                         },
                         _ => {}
                     }
                 },
-                AppState::EditTask => {
+                AppState::EditTask(prev) => {
                     match key.code {
                         KeyCode::Char(c) => app.add_to_detail_input(c),
                         KeyCode::Backspace => app.delete_from_detail_input(),
                         KeyCode::Tab => app.next_detail_input(),
                         KeyCode::Enter => {
                             app.save_details_to_task();
-                            app.change_state(AppState::Tracker);
+                            app.change_state(*prev);
                         }
-                        KeyCode::Esc => app.change_state(AppState::Tracker),
+                        KeyCode::Esc => app.change_state(*prev),
                         _ => {}
                     }
                 },
-                AppState::EditBacklogTask => {
+                AppState::CreateTask(prev) => {
                     match key.code {
                         KeyCode::Char(c) => app.add_to_detail_input(c),
                         KeyCode::Backspace => app.delete_from_detail_input(),
                         KeyCode::Tab => app.next_detail_input(),
                         KeyCode::Enter => {
                             app.save_details_to_task();
-                            app.change_state(AppState::BacklogPopup);
+                            app.change_state(*prev);
                         }
-                        KeyCode::Esc => app.change_state(AppState::BacklogPopup),
+                        KeyCode::Esc => app.change_state(*prev),
                         _ => {}
                     }
                 },
-                AppState::CreateTask => {
-                    match key.code {
-                        KeyCode::Char(c) => app.add_to_detail_input(c),
-                        KeyCode::Backspace => app.delete_from_detail_input(),
-                        KeyCode::Tab => app.next_detail_input(),
-                        KeyCode::Enter => {
-                            app.save_details_to_task();
-                            app.change_state(AppState::Tracker);
-                        }
-                        KeyCode::Esc => app.change_state(AppState::Tracker),
-                        _ => {}
-                    }
-                },
-                AppState::CreateBacklogTask => {
-                    match key.code {
-                        KeyCode::Char(c) => app.add_to_detail_input(c),
-                        KeyCode::Backspace => app.delete_from_detail_input(),
-                        KeyCode::Tab => app.next_detail_input(),
-                        KeyCode::Enter => {
-                            app.save_details_to_task();
-                            app.change_state(AppState::BacklogPopup);
-                        }
-                        KeyCode::Esc => app.change_state(AppState::BacklogPopup),
-                        _ => {}
-                    }
-                },
-                AppState::DeleteTaskPrompt => {
+                AppState::DeleteTask(prev) => {
                     match key.code {
                         KeyCode::Char('y') => {
                             app.delete_highlighted_task();
-                            app.change_state(AppState::Tracker);
+                            app.change_state(*prev);
                         },
-                        KeyCode::Char('n') => app.change_state(AppState::Tracker),
+                        KeyCode::Char('n') => app.change_state(*prev),
                         KeyCode::Enter => {
                             app.delete_highlighted_task();
-                            app.change_state(AppState::Tracker);
+                            app.change_state(*prev);
                         },
-                        KeyCode::Esc => app.change_state(AppState::Tracker),
-                        _ => {}
-                    }
-                },
-                AppState::DeleteBacklogTaskPrompt => {
-                    match key.code {
-                        KeyCode::Char('y') => {
-                            app.delete_highlighted_task();
-                            app.change_state(AppState::BacklogPopup);
-                        },
-                        KeyCode::Char('n') => app.change_state(AppState::BacklogPopup),
-                        KeyCode::Enter => {
-                            app.delete_highlighted_task();
-                            app.change_state(AppState::BacklogPopup);
-                        },
-                        KeyCode::Esc => app.change_state(AppState::BacklogPopup),
-                        _ => {}
-                    }
-                },
-                AppState::DeleteArchiveTaskPrompt => {
-                    match key.code {
-                        KeyCode::Char('y') => {
-                            app.delete_highlighted_task();
-                            app.change_state(AppState::ArchivePopup);
-                        },
-                        KeyCode::Char('n') => app.change_state(AppState::ArchivePopup),
-                        KeyCode::Enter => {
-                            app.delete_highlighted_task();
-                            app.change_state(AppState::ArchivePopup);
-                        },
-                        KeyCode::Esc => app.change_state(AppState::ArchivePopup),
+                        KeyCode::Esc => app.change_state(*prev),
                         _ => {}
                     }
                 },

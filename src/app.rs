@@ -2,21 +2,15 @@ use std::{cmp, fs};
 
 use crate::task_list::*;
 
-// TODO: Refactor states to include the previous state
+#[derive(Clone)]
 pub enum AppState {
     Tracker,
-    TaskView,
-    BacklogPopup,
-    BacklogTaskView,
-    ArchivePopup,
-    ArchiveTaskView,
-    EditTask,
-    EditBacklogTask,
-    CreateTask,
-    CreateBacklogTask,
-    DeleteTaskPrompt,
-    DeleteBacklogTaskPrompt,
-    DeleteArchiveTaskPrompt,
+    TaskView(Box<AppState>),
+    BacklogPopup(Box<AppState>),
+    ArchivePopup(Box<AppState>),
+    EditTask(Box<AppState>),
+    CreateTask(Box<AppState>),
+    DeleteTask(Box<AppState>),
 }
 
 pub struct App {
@@ -65,8 +59,8 @@ impl App {
             AppState::Tracker => {
                 list = &mut self.task_lists[self.active_list];
             },
-            AppState::BacklogPopup => list = &mut self.backlog,
-            AppState::ArchivePopup => list = &mut self.archive,
+            AppState::BacklogPopup(_) => list = &mut self.backlog,
+            AppState::ArchivePopup(_) => list = &mut self.archive,
             _ => return
         }
 
@@ -92,8 +86,8 @@ impl App {
             AppState::Tracker => {
                 list = &mut self.task_lists[self.active_list];
             },
-            AppState::BacklogPopup => list = &mut self.backlog,
-            AppState::ArchivePopup => list = &mut self.archive,
+            AppState::BacklogPopup(_) => list = &mut self.backlog,
+            AppState::ArchivePopup(_) => list = &mut self.archive,
             _ => return
         }
 
@@ -180,8 +174,8 @@ impl App {
         let list: &mut TaskList;
 
         match self.state {
-            AppState::BacklogPopup => list = &mut self.backlog,
-            AppState::ArchivePopup => list = &mut self.archive,
+            AppState::BacklogPopup(_) => list = &mut self.backlog,
+            AppState::ArchivePopup(_) => list = &mut self.archive,
             _ => return
         }
 
@@ -251,24 +245,20 @@ impl App {
         self.state = state;
     }
 
-    pub fn get_selected_task(&self) -> Option<&Task> {
-        let list: &TaskList;
-
-        match self.state {
-            AppState::Tracker => list = &self.task_lists[self.active_list],
-            AppState::TaskView => list = &self.task_lists[self.active_list],
-            AppState::EditTask => list = &self.task_lists[self.active_list],
-            AppState::CreateTask => list = &self.task_lists[self.active_list],
-            AppState::DeleteTaskPrompt => list = &self.task_lists[self.active_list],
-            AppState::BacklogPopup => list = &self.backlog,
-            AppState::EditBacklogTask => list = &self.backlog,
-            AppState::BacklogTaskView => list = &self.backlog,
-            AppState::CreateBacklogTask => list = &self.backlog,
-            AppState::DeleteBacklogTaskPrompt => list = &self.backlog,
-            AppState::ArchivePopup => list = &self.archive,
-            AppState::ArchiveTaskView => list = &self.archive,
-            AppState::DeleteArchiveTaskPrompt => list = &self.archive,
+    fn get_focused_list(&self, state: &AppState) -> &TaskList {
+        match state {
+            AppState::Tracker => &self.task_lists[self.active_list],
+            AppState::BacklogPopup(_) => &self.backlog,
+            AppState::ArchivePopup(_) => &self.archive,
+            AppState::TaskView(prev) => self.get_focused_list(&*prev),
+            AppState::EditTask(prev) => self.get_focused_list(&*prev),
+            AppState::CreateTask(prev) => self.get_focused_list(&*prev),
+            AppState::DeleteTask(prev) => self.get_focused_list(&*prev),
         }
+    }
+
+    pub fn get_selected_task(&self) -> Option<&Task> {
+        let list = self.get_focused_list(&self.state);
 
         match list.state.selected() {
             Some(i) => Some(&list.tasks[i]),
@@ -277,14 +267,7 @@ impl App {
     }
 
     pub fn focused_list_is_empty(&self) -> bool {
-        let list: &TaskList;
-
-        match self.state {
-            AppState::Tracker => list = &self.task_lists[self.active_list],
-            AppState::BacklogPopup => list = &self.backlog,
-            AppState::ArchivePopup => list = &self.archive,
-            _ => return true
-        }
+        let list = self.get_focused_list(&self.state);
 
         list.tasks.is_empty()
     }
@@ -302,16 +285,12 @@ impl App {
     }
 
     pub fn cycle_list_color(&mut self, amount: i8) {
-        let list: &mut TaskList;
-
-        match self.state {
-            AppState::Tracker => {
-                list = &mut self.task_lists[self.active_list];
-            },
-            AppState::BacklogPopup => list = &mut self.backlog,
-            AppState::ArchivePopup => list = &mut self.archive,
+        let list = match self.state {
+            AppState::Tracker => &mut self.task_lists[self.active_list],
+            AppState::BacklogPopup(_) => &mut self.backlog,
+            AppState::ArchivePopup(_) => &mut self.archive,
             _ => return
-        }
+        };
 
         let mut new_color = list.color_index as i8 + amount;
         if new_color < 1 {
@@ -390,42 +369,34 @@ impl App {
             category,
         };
 
-        let list: &mut TaskList;
+        match &self.state {
+            AppState::EditTask(prev) => {
+                let list = match **prev {
+                    AppState::Tracker => &mut self.task_lists[self.active_list],
+                    AppState::BacklogPopup(_) => &mut self.backlog,
+                    AppState::ArchivePopup(_) => &mut self.archive,
+                    _ => return
+                };
 
-        match self.state {
-            AppState::EditTask => list = &mut self.task_lists[self.active_list],
-            AppState::CreateTask => list = &mut self.task_lists[self.active_list],
-            AppState::EditBacklogTask => list = &mut self.backlog,
-            AppState::CreateBacklogTask => list = &mut self.backlog,
-            _ => return
-        }
-
-        match self.state {
-            AppState::EditTask => {
                 if let Some(i) = list.state.selected() {
                     list.tasks.remove(i);
                     list.tasks.insert(i, new_task);
                 }
             },
-            AppState::EditBacklogTask => {
-                if let Some(i) = list.state.selected() {
-                    list.tasks.remove(i);
-                    list.tasks.insert(i, new_task);
-                }
-            },
-            AppState::CreateTask => {
+            AppState::CreateTask(prev) => {
+                let list = match **prev {
+                    AppState::Tracker => &mut self.task_lists[self.active_list],
+                    AppState::BacklogPopup(_) => &mut self.backlog,
+                    AppState::ArchivePopup(_) => &mut self.archive,
+                    _ => return
+                };
+
                 list.tasks.push(new_task);
                 if list.tasks.len() == 1 {
                     list.state.select(Some(0));
                 }
             },
-            AppState::CreateBacklogTask => {
-                list.tasks.push(new_task);
-                if list.tasks.len() == 1 {
-                    list.state.select(Some(0));
-                }
-            },
-            _ => unreachable!()
+            _ => {}
         }
     }
 
@@ -436,21 +407,21 @@ impl App {
     }
 
     pub fn delete_highlighted_task(&mut self) {
-        let list: &mut TaskList;
+        if let AppState::DeleteTask(prev) = &self.state {
+            let list = match **prev {
+                AppState::Tracker => &mut self.task_lists[self.active_list],
+                AppState::BacklogPopup(_) => &mut self.backlog,
+                AppState::ArchivePopup(_) => &mut self.archive,
+                _ => return
+            };
 
-        match self.state {
-            AppState::DeleteTaskPrompt => list = &mut self.task_lists[self.active_list],
-            AppState::DeleteBacklogTaskPrompt => list = &mut self.backlog,
-            AppState::DeleteArchiveTaskPrompt => list = &mut self.archive,
-            _ => return
-        }
-
-        if let Some(i) = list.state.selected() {
-            list.tasks.remove(i);
-            if list.tasks.is_empty() {
-                list.state.select(None);
-            } else if i >= list.tasks.len() {
-                list.state.select(Some(i - 1));
+            if let Some(i) = list.state.selected() {
+                list.tasks.remove(i);
+                if list.tasks.is_empty() {
+                    list.state.select(None);
+                } else if i >= list.tasks.len() {
+                    list.state.select(Some(i - 1));
+                }
             }
         }
     }
