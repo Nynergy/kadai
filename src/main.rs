@@ -37,7 +37,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     terminal.clear()?;
 
     // Application Entry Point
-    let mut app = App::new();
+    let mut app = App::create()?;
     let res = run_app(&mut terminal, &mut app);
 
     // Restore Terminal
@@ -85,9 +85,17 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                                 app.change_state(AppState::EditTask(Box::new(state)));
                             }
                         },
-                        // TODO: Add new list
-                        // TODO: Delete focused list
-                        // TODO: Rename focused list
+                        KeyCode::Char('N') => {
+                            app.clear_list_inputs();
+                            app.change_state(AppState::CreateList(Box::new(state)));
+                        },
+                        KeyCode::Char('D') => {
+                            app.change_state(AppState::DeleteList(Box::new(state)));
+                        },
+                        KeyCode::Char('E') => {
+                            app.populate_list_detail_inputs();
+                            app.change_state(AppState::EditList(Box::new(state)));
+                        },
                         KeyCode::Char('q') => break,
                         KeyCode::Char('j') => app.list_down(),
                         KeyCode::Char('k') => app.list_up(),
@@ -217,6 +225,45 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                         KeyCode::Char('n') => app.change_state(*prev),
                         KeyCode::Enter => {
                             app.delete_highlighted_task();
+                            app.change_state(*prev);
+                        },
+                        KeyCode::Esc => app.change_state(*prev),
+                        _ => {}
+                    }
+                },
+                AppState::EditList(prev) => {
+                    match key.code {
+                        KeyCode::Char(c) => app.add_to_detail_input(c),
+                        KeyCode::Backspace => app.delete_from_detail_input(),
+                        KeyCode::Enter => {
+                            app.save_details_to_list();
+                            app.change_state(*prev);
+                        }
+                        KeyCode::Esc => app.change_state(*prev),
+                        _ => {}
+                    }
+                },
+                AppState::CreateList(prev) => {
+                    match key.code {
+                        KeyCode::Char(c) => app.add_to_detail_input(c),
+                        KeyCode::Backspace => app.delete_from_detail_input(),
+                        KeyCode::Enter => {
+                            app.save_details_to_list();
+                            app.change_state(*prev);
+                        }
+                        KeyCode::Esc => app.change_state(*prev),
+                        _ => {}
+                    }
+                },
+                AppState::DeleteList(prev) => {
+                    match key.code {
+                        KeyCode::Char('y') => {
+                            app.delete_focused_list();
+                            app.change_state(*prev);
+                        },
+                        KeyCode::Char('n') => app.change_state(*prev),
+                        KeyCode::Enter => {
+                            app.delete_focused_list();
                             app.change_state(*prev);
                         },
                         KeyCode::Esc => app.change_state(*prev),

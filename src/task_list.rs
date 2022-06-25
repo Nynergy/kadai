@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use tui::widgets::ListState;
 
-#[derive(Deserialize, Serialize)]
+#[derive(Clone, Deserialize, Serialize)]
 pub struct Task {
     pub summary: String,
     pub description: Option<String>,
@@ -15,4 +15,24 @@ pub struct TaskList {
     #[serde(skip)]
     pub state: ListState,
     pub tasks: Vec<Task>,
+}
+
+impl TaskList {
+    pub fn default() -> Self {
+        Self {
+            name: "Tasks".to_string(),
+            color_index: 7,
+            state: ListState::default(),
+            tasks: Vec::new(),
+        }
+    }
+
+    pub fn from(name: String) -> Self {
+        Self {
+            name,
+            color_index: 7,
+            state: ListState::default(),
+            tasks: Vec::new(),
+        }
+    }
 }

@@ -118,6 +118,18 @@ pub fn ui<B: Backend>(frame: &mut Frame<B>, app: &mut App, state: AppState) {
             ui(frame, app, *prev);
             render_prompt(frame, app, "Delete Highlighted Task?".to_string());
         },
+        AppState::EditList(prev) => {
+            ui(frame, app, *prev);
+            render_list_editor(frame, app, "Edit List Details".to_string());
+        },
+        AppState::CreateList(prev) => {
+            ui(frame, app, *prev);
+            render_list_editor(frame, app, "Create New List".to_string());
+        },
+        AppState::DeleteList(prev) => {
+            ui(frame, app, *prev);
+            render_prompt(frame, app, "Delete Focused List?".to_string());
+        },
     }
 }
 
@@ -473,6 +485,73 @@ fn render_task_editor<B: Backend>(
         .alignment(Alignment::Center);
 
     frame.render_widget(info, chunks[3]);
+}
+
+fn render_list_editor<B: Backend>(
+    frame: &mut Frame<B>,
+    app: &mut App,
+    editor_title: String,
+) {
+    let size = frame.size();
+    let area = centered_fixed_size_rect((size.width as f32 * 0.6) as usize, 6, size);
+    let area_block = Block::default()
+        .title(
+            Span::styled(
+                editor_title,
+                Style::default()
+                .add_modifier(Modifier::BOLD)
+            )
+        )
+        .title_alignment(Alignment::Center)
+        .borders(Borders::ALL)
+        .border_type(BorderType::Double);
+
+    frame.render_widget(Clear, area); // Clear the area first
+    frame.render_widget(area_block, area);
+
+    let inner_area = shrink_rect(area, 1);
+
+    let chunks = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints(
+            [
+            Constraint::Length(3),
+            Constraint::Length(1),
+            ]
+            .as_ref()
+        )
+        .split(inner_area);
+
+    let name = Paragraph::new(app.list_detail_input.clone())
+        .style(
+            Style::default().fg(Color::Red)
+        )
+        .block(
+            Block::default()
+            .borders(Borders::ALL)
+            .title("List Name")
+        )
+        .wrap(Wrap { trim: true });
+
+    frame.render_widget(name, chunks[0]);
+
+    frame.set_cursor(
+        chunks[0].x + app.list_detail_input.len() as u16 + 1,
+        chunks[0].y + 1
+    );
+
+    let info = Paragraph::new(
+        Span::styled(
+            "Press Enter to Save Changes, Esc to Exit",
+            Style::default()
+            .fg(Color::Red)
+            .add_modifier(Modifier::BOLD)
+        ))
+        .block(Block::default())
+        .wrap(Wrap { trim: true })
+        .alignment(Alignment::Center);
+
+    frame.render_widget(info, chunks[1]);
 }
 
 fn render_prompt<B: Backend>(

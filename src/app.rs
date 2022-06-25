@@ -2,6 +2,10 @@ use std::{cmp, fs};
 
 use crate::task_list::*;
 
+const TRACKER_FILE: &str = "./tracker.json";
+const BACKLOG_FILE: &str = "./backlog.json";
+const ARCHIVE_FILE: &str = "./archive.json";
+
 #[derive(Clone)]
 pub enum AppState {
     Tracker,
@@ -11,6 +15,9 @@ pub enum AppState {
     EditTask(Box<AppState>),
     CreateTask(Box<AppState>),
     DeleteTask(Box<AppState>),
+    EditList(Box<AppState>),
+    CreateList(Box<AppState>),
+    DeleteList(Box<AppState>),
 }
 
 pub struct App {
@@ -22,19 +29,21 @@ pub struct App {
     pub detail_scroll: u16,
     pub task_detail_inputs: Vec<String>,
     pub active_detail_input: usize,
+    pub list_detail_input: String,
 }
 
 impl App {
-    pub fn new() -> Self {
+    pub fn create() -> Result<Self, std::io::Error> {
         let mut app = Self {
             state: AppState::Tracker,
-            task_lists: read_tracker_file().unwrap(),
+            task_lists: read_tracker_file()?,
             active_list: 0,
-            backlog: read_backlog_file().unwrap(),
-            archive: read_archive_file().unwrap(),
+            backlog: read_backlog_file()?,
+            archive: read_archive_file()?,
             detail_scroll: 0,
             task_detail_inputs: vec![String::new(); 3],
             active_detail_input: 0,
+            list_detail_input: String::new(),
         };
 
         for i in 0..app.task_lists.len() {
@@ -49,7 +58,7 @@ impl App {
             app.archive.state.select(Some(0));
         }
 
-        app
+        Ok(app)
     }
 
     pub fn list_down(&mut self) {
@@ -254,6 +263,9 @@ impl App {
             AppState::EditTask(prev) => self.get_focused_list(&*prev),
             AppState::CreateTask(prev) => self.get_focused_list(&*prev),
             AppState::DeleteTask(prev) => self.get_focused_list(&*prev),
+            AppState::EditList(prev) => self.get_focused_list(&*prev),
+            AppState::CreateList(prev) => self.get_focused_list(&*prev),
+            AppState::DeleteList(prev) => self.get_focused_list(&*prev),
         }
     }
 
@@ -328,11 +340,39 @@ impl App {
     }
 
     pub fn add_to_detail_input(&mut self, c: char) {
-        self.task_detail_inputs[self.active_detail_input].push(c);
+        match self.state {
+            AppState::EditTask(_) => {
+                self.task_detail_inputs[self.active_detail_input].push(c);
+            },
+            AppState::CreateTask(_) => {
+                self.task_detail_inputs[self.active_detail_input].push(c);
+            },
+            AppState::EditList(_) => {
+                self.list_detail_input.push(c);
+            },
+            AppState::CreateList(_) => {
+                self.list_detail_input.push(c);
+            },
+            _ => {}
+        }
     }
 
     pub fn delete_from_detail_input(&mut self) {
-        self.task_detail_inputs[self.active_detail_input].pop();
+        match self.state {
+            AppState::EditTask(_) => {
+                self.task_detail_inputs[self.active_detail_input].pop();
+            },
+            AppState::CreateTask(_) => {
+                self.task_detail_inputs[self.active_detail_input].pop();
+            },
+            AppState::EditList(_) => {
+                self.list_detail_input.pop();
+            },
+            AppState::CreateList(_) => {
+                self.list_detail_input.pop();
+            },
+            _ => {}
+        }
     }
 
     pub fn next_detail_input(&mut self) {
@@ -406,6 +446,45 @@ impl App {
         }
     }
 
+    pub fn populate_list_detail_inputs(&mut self) {
+        let list = self.get_focused_list(&self.state);
+
+        self.list_detail_input = list.name.clone();
+    }
+
+    pub fn save_details_to_list(&mut self) {
+        let name = self.list_detail_input.drain(..).collect();
+
+        match &self.state {
+            AppState::EditList(prev) => {
+                let list = match **prev {
+                    AppState::Tracker => &self.task_lists[self.active_list],
+                    AppState::BacklogPopup(_) => &self.backlog,
+                    AppState::ArchivePopup(_) => &self.archive,
+                    _ => return
+                };
+
+                let new_list = TaskList {
+                    name,
+                    color_index: list.color_index,
+                    state: list.state.clone(),
+                    tasks: list.tasks.clone(),
+                };
+
+                match **prev {
+                    AppState::Tracker => self.task_lists[self.active_list] = new_list,
+                    AppState::BacklogPopup(_) => self.backlog = new_list,
+                    AppState::ArchivePopup(_) => self.archive = new_list,
+                    _ => return
+                }
+            },
+            AppState::CreateList(_prev) => {
+                self.task_lists.push(TaskList::from(name));
+            },
+            _ => {}
+        }
+    }
+
     pub fn delete_highlighted_task(&mut self) {
         if let AppState::DeleteTask(prev) = &self.state {
             let list = match **prev {
@@ -425,40 +504,64 @@ impl App {
             }
         }
     }
+
+    pub fn delete_focused_list(&mut self) {
+        self.task_lists.remove(self.active_list);
+
+        if self.task_lists.is_empty() {
+            self.create_default_list();
+        } else if self.active_list >= self.task_lists.len() {
+            self.active_list -= 1;
+        }
+    }
+
+    fn create_default_list(&mut self) {
+        self.task_lists.push(TaskList::default());
+    }
+
+    pub fn clear_list_inputs(&mut self) {
+        self.list_detail_input.clear();
+    }
 }
 
 fn read_tracker_file() -> Result<Vec<TaskList>, std::io::Error> {
-    let file_contents = fs::read_to_string("./tracker.json")?;
+    // TODO: Look for tracker file in project directory in ~/.kadai
+    // TODO: If file doesn't exit, create one
+    let file_contents = fs::read_to_string(TRACKER_FILE)?;
     let parsed: Vec<TaskList> = serde_json::from_str(&file_contents)?;
     Ok(parsed)
 }
 
 fn read_backlog_file() -> Result<TaskList, std::io::Error> {
-    let file_contents = fs::read_to_string("./backlog.json")?;
+    // TODO: Look for backlog file in project directory in ~/.kadai
+    // TODO: If file doesn't exit, create one
+    let file_contents = fs::read_to_string(BACKLOG_FILE)?;
     let parsed: TaskList = serde_json::from_str(&file_contents)?;
     Ok(parsed)
 }
 
 fn read_archive_file() -> Result<TaskList, std::io::Error> {
-    let file_contents = fs::read_to_string("./archive.json")?;
+    // TODO: Look for archive file in project directory in ~/.kadai
+    // TODO: If file doesn't exit, create one
+    let file_contents = fs::read_to_string(ARCHIVE_FILE)?;
     let parsed: TaskList = serde_json::from_str(&file_contents)?;
     Ok(parsed)
 }
 
 fn save_tracker_file(data: &Vec<TaskList>) -> Result<(), std::io::Error> {
     let json_data = serde_json::to_string_pretty(data)?;
-    fs::write("./tracker.json", json_data)?;
+    fs::write(TRACKER_FILE, json_data)?;
     Ok(())
 }
 
 fn save_backlog_file(data: &TaskList) -> Result<(), std::io::Error> {
     let json_data = serde_json::to_string_pretty(data)?;
-    fs::write("./backlog.json", json_data)?;
+    fs::write(BACKLOG_FILE, json_data)?;
     Ok(())
 }
 
 fn save_archive_file(data: &TaskList) -> Result<(), std::io::Error> {
     let json_data = serde_json::to_string_pretty(data)?;
-    fs::write("./archive.json", json_data)?;
+    fs::write(ARCHIVE_FILE, json_data)?;
     Ok(())
 }
