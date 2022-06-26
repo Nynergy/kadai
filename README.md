@@ -18,7 +18,7 @@ specific projects. However, this became a hassle, and caused me to use the app
 less and less, and sometimes even abandon projects I felt were getting too large
 and unwieldy. So I decided to do what I do best: Spend far too much time making
 my own in-house solution to a problem already solved by thousands of other
-people -- but do it in the terminal.
+people -- but do it in the terminal with vim-like bindings.
 
 Also I just wanted to use this project as an excuse to learn Rust :)
 
@@ -61,7 +61,7 @@ $ cargo build
 $ cargo run <project-name>
 ```
 
-Where <project-name> is just the name of the project directory you want to
+Where \<project-name\> is just the name of the project directory you want to
 create.
 
 To install it into your Cargo installation's install root, do:
