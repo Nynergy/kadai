@@ -150,8 +150,8 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                         KeyCode::Char('l') => app.next_list(),
                         KeyCode::Char('J') => app.task_down(),
                         KeyCode::Char('K') => app.task_up(),
-                        // TODO: Move list left
-                        // TODO: Move list right
+                        KeyCode::Char('H') => app.list_left(),
+                        KeyCode::Char('L') => app.list_right(),
                         KeyCode::Char('c') => app.cycle_list_color(1),
                         KeyCode::Char('C') => app.cycle_list_color(-1),
                         KeyCode::Char(' ') => app.move_task_to_next_list(),
@@ -249,6 +249,7 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                     match key.code {
                         KeyCode::Char(c) => app.add_to_detail_input(c),
                         KeyCode::Backspace => app.delete_from_detail_input(),
+                        // TODO: Hit Delete to clear the focused input
                         KeyCode::Tab => app.next_detail_input(),
                         KeyCode::Enter => {
                             app.save_details_to_task();
@@ -262,6 +263,7 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                     match key.code {
                         KeyCode::Char(c) => app.add_to_detail_input(c),
                         KeyCode::Backspace => app.delete_from_detail_input(),
+                        // TODO: Hit Delete to clear the focused input
                         KeyCode::Tab => app.next_detail_input(),
                         KeyCode::Enter => {
                             app.save_details_to_task();
@@ -290,6 +292,7 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                     match key.code {
                         KeyCode::Char(c) => app.add_to_detail_input(c),
                         KeyCode::Backspace => app.delete_from_detail_input(),
+                        // TODO: Hit Delete to clear the focused input
                         KeyCode::Enter => {
                             app.save_details_to_list();
                             app.change_state(*prev);
@@ -302,6 +305,7 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                     match key.code {
                         KeyCode::Char(c) => app.add_to_detail_input(c),
                         KeyCode::Backspace => app.delete_from_detail_input(),
+                        // TODO: Hit Delete to clear the focused input
                         KeyCode::Enter => {
                             app.save_details_to_list();
                             app.change_state(*prev);

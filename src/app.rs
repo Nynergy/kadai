@@ -162,6 +162,23 @@ impl App {
         }
     }
 
+    pub fn list_left(&mut self) {
+        if let Some(index) = self.active_list.checked_sub(1) {
+            self.task_lists.swap(self.active_list, index);
+            self.active_list = index;
+        }
+    }
+
+    pub fn list_right(&mut self) {
+        let mut index = self.active_list + 1;
+        if index >= self.task_lists.len() {
+            index = self.task_lists.len() - 1;
+        }
+
+        self.task_lists.swap(self.active_list, index);
+        self.active_list = index;
+    }
+
     pub fn move_task_to_next_list(&mut self) {
         if self.active_list != self.task_lists.len() - 1 {
             let list = &mut self.task_lists[self.active_list];
