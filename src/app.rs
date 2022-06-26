@@ -162,6 +162,32 @@ impl App {
         }
     }
 
+    pub fn jump_to_list_top(&mut self) {
+        let list = match self.state {
+            AppState::Tracker => &mut self.task_lists[self.active_list],
+            AppState::BacklogPopup(_) => &mut self.backlog,
+            AppState::ArchivePopup(_) => &mut self.archive,
+            _ => return
+        };
+
+        if let Some(_) = list.state.selected() {
+            list.state.select(Some(0));
+        }
+    }
+
+    pub fn jump_to_list_bottom(&mut self) {
+        let list = match self.state {
+            AppState::Tracker => &mut self.task_lists[self.active_list],
+            AppState::BacklogPopup(_) => &mut self.backlog,
+            AppState::ArchivePopup(_) => &mut self.archive,
+            _ => return
+        };
+
+        if let Some(_) = list.state.selected() {
+            list.state.select(Some(list.tasks.len() - 1));
+        }
+    }
+
     pub fn list_left(&mut self) {
         if let Some(index) = self.active_list.checked_sub(1) {
             self.task_lists.swap(self.active_list, index);

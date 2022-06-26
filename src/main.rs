@@ -152,6 +152,8 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                         KeyCode::Char('K') => app.task_up(),
                         KeyCode::Char('H') => app.list_left(),
                         KeyCode::Char('L') => app.list_right(),
+                        KeyCode::Char('g') => app.jump_to_list_top(),
+                        KeyCode::Char('G') => app.jump_to_list_bottom(),
                         KeyCode::Char('c') => app.cycle_list_color(1),
                         KeyCode::Char('C') => app.cycle_list_color(-1),
                         KeyCode::Char(' ') => app.move_task_to_next_list(),
@@ -204,6 +206,8 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                         KeyCode::Char('k') => app.list_up(),
                         KeyCode::Char('J') => app.task_down(),
                         KeyCode::Char('K') => app.task_up(),
+                        KeyCode::Char('g') => app.jump_to_list_top(),
+                        KeyCode::Char('G') => app.jump_to_list_bottom(),
                         KeyCode::Char(' ') => app.move_task_to_list(0),
                         KeyCode::Char('c') => app.cycle_list_color(1),
                         KeyCode::Char('C') => app.cycle_list_color(-1),
@@ -229,6 +233,8 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                         KeyCode::Char('k') => app.list_up(),
                         KeyCode::Char('J') => app.task_down(),
                         KeyCode::Char('K') => app.task_up(),
+                        KeyCode::Char('g') => app.jump_to_list_top(),
+                        KeyCode::Char('G') => app.jump_to_list_bottom(),
                         KeyCode::Char(' ') => {
                             let dest_index = app.task_lists.len() - 1;
                             app.move_task_to_list(dest_index);
