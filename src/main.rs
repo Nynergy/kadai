@@ -14,7 +14,7 @@ use crossterm::{
         LeaveAlternateScreen
     }
 };
-use std::{error::Error, io};
+use std::{error::Error, env, fs, io::{self, Write}, path::PathBuf, process};
 use tui::{
     backend::{Backend, CrosstermBackend},
     Terminal
@@ -28,6 +28,53 @@ use app::*;
 use ui::*;
 
 fn main() -> Result<(), Box<dyn Error>> {
+    // Command Line Arguments
+    let args: Vec<String> = env::args().collect();
+    if args.len() != 2 {
+        println!("USAGE: {} <project-name>", &args[0]);
+        return Ok(());
+    }
+
+    // Environment Variables
+    let user_home = env::var("HOME");
+    let user_home = user_home.unwrap_or_else(|_| {
+        eprintln!("Could not find environment variable: $HOME");
+        process::exit(1);
+    });
+    let mut path = PathBuf::from(&user_home);
+    env::set_current_dir(&path)?;
+
+    // Check if ~/.kadai exists, and if it doesn't, create it
+    path.push(".kadai");
+    if !path.exists() {
+        fs::create_dir(&path)?;
+    }
+    env::set_current_dir(&path)?;
+
+    // Check if project dir exists, and if it doesn't, create it
+    // TODO: Make project name optional and present project select screen
+    path.push(&args[1]);
+    if !path.exists() {
+        let mut input = String::new();
+        print!("Project '{}' does not exist. Create it? [y/N] ", &args[1]);
+        io::stdout().flush()?;
+        io::stdin().read_line(&mut input).expect("Did not enter a correct string");
+        if let Some('\n') = input.chars().next_back() {
+            input.pop();
+        }
+        if let Some('\r') = input.chars().next_back() {
+            input.pop();
+        }
+
+        if input == "y" || input == "Y" {
+            fs::create_dir(&path)?;
+        } else {
+            println!("Project not created, exiting...");
+            process::exit(0);
+        }
+    }
+    env::set_current_dir(&path)?;
+
     // Setup Terminal
     enable_raw_mode()?;
     let mut stdout = io::stdout();

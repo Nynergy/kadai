@@ -1,4 +1,4 @@
-use std::{cmp, fs};
+use std::{cmp, env, fs};
 
 use crate::task_list::*;
 
@@ -525,43 +525,64 @@ impl App {
 }
 
 fn read_tracker_file() -> Result<Vec<TaskList>, std::io::Error> {
-    // TODO: Look for tracker file in project directory in ~/.kadai
-    // TODO: If file doesn't exit, create one
-    let file_contents = fs::read_to_string(TRACKER_FILE)?;
+    let mut path = env::current_dir()?;
+    path.push(TRACKER_FILE);
+
+    if !path.exists() {
+        save_tracker_file(&vec![TaskList::default()])?;
+    }
+
+    let file_contents = fs::read_to_string(path.as_path())?;
     let parsed: Vec<TaskList> = serde_json::from_str(&file_contents)?;
     Ok(parsed)
 }
 
 fn read_backlog_file() -> Result<TaskList, std::io::Error> {
-    // TODO: Look for backlog file in project directory in ~/.kadai
-    // TODO: If file doesn't exit, create one
-    let file_contents = fs::read_to_string(BACKLOG_FILE)?;
+    let mut path = env::current_dir()?;
+    path.push(BACKLOG_FILE);
+
+    if !path.exists() {
+        save_backlog_file(&TaskList::empty_backlog())?;
+    }
+
+    let file_contents = fs::read_to_string(path.as_path())?;
     let parsed: TaskList = serde_json::from_str(&file_contents)?;
     Ok(parsed)
 }
 
 fn read_archive_file() -> Result<TaskList, std::io::Error> {
-    // TODO: Look for archive file in project directory in ~/.kadai
-    // TODO: If file doesn't exit, create one
-    let file_contents = fs::read_to_string(ARCHIVE_FILE)?;
+    let mut path = env::current_dir()?;
+    path.push(ARCHIVE_FILE);
+
+    if !path.exists() {
+        save_archive_file(&TaskList::empty_archive())?;
+    }
+
+    let file_contents = fs::read_to_string(path.as_path())?;
     let parsed: TaskList = serde_json::from_str(&file_contents)?;
     Ok(parsed)
 }
 
 fn save_tracker_file(data: &Vec<TaskList>) -> Result<(), std::io::Error> {
+    let mut path = env::current_dir()?;
+    path.push(TRACKER_FILE);
     let json_data = serde_json::to_string_pretty(data)?;
-    fs::write(TRACKER_FILE, json_data)?;
+    fs::write(path.as_path(), json_data)?;
     Ok(())
 }
 
 fn save_backlog_file(data: &TaskList) -> Result<(), std::io::Error> {
+    let mut path = env::current_dir()?;
+    path.push(BACKLOG_FILE);
     let json_data = serde_json::to_string_pretty(data)?;
-    fs::write(BACKLOG_FILE, json_data)?;
+    fs::write(path.as_path(), json_data)?;
     Ok(())
 }
 
 fn save_archive_file(data: &TaskList) -> Result<(), std::io::Error> {
+    let mut path = env::current_dir()?;
+    path.push(ARCHIVE_FILE);
     let json_data = serde_json::to_string_pretty(data)?;
-    fs::write(ARCHIVE_FILE, json_data)?;
+    fs::write(path.as_path(), json_data)?;
     Ok(())
 }

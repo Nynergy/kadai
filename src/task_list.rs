@@ -35,4 +35,22 @@ impl TaskList {
             tasks: Vec::new(),
         }
     }
+
+    pub fn empty_backlog() -> Self {
+        Self {
+            name: "Backlog".to_string(),
+            color_index: 6,
+            state: ListState::default(),
+            tasks: Vec::new(),
+        }
+    }
+
+    pub fn empty_archive() -> Self {
+        Self {
+            name: "Archive".to_string(),
+            color_index: 1,
+            state: ListState::default(),
+            tasks: Vec::new(),
+        }
+    }
 }
