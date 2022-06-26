@@ -498,6 +498,24 @@ impl App {
         }
     }
 
+    pub fn clear_focused_input(&mut self) {
+        match self.state {
+            AppState::EditTask(_) => {
+                self.task_detail_inputs[self.active_detail_input].clear();
+            },
+            AppState::CreateTask(_) => {
+                self.task_detail_inputs[self.active_detail_input].clear();
+            },
+            AppState::EditList(_) => {
+                self.list_detail_input.clear();
+            },
+            AppState::CreateList(_) => {
+                self.list_detail_input.clear();
+            },
+            _ => {}
+        }
+    }
+
     pub fn populate_list_detail_inputs(&mut self) {
         let list = self.get_focused_list(&self.state);
 

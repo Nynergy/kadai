@@ -244,7 +244,7 @@ fn render_task_data<B: Backend>(
 
         let info = Paragraph::new(
             Span::styled(
-                "Press Enter to close",
+                "Press Enter to close, 'j' and 'k' to Scroll",
                 Style::default()
                 .fg(Color::Red)
                 .add_modifier(Modifier::BOLD)
@@ -411,6 +411,7 @@ fn render_task_editor<B: Backend>(
             Constraint::Min(3),
             Constraint::Length(3),
             Constraint::Length(1),
+            Constraint::Length(1),
             ]
             .as_ref()
         )
@@ -475,7 +476,7 @@ fn render_task_editor<B: Backend>(
 
     let info = Paragraph::new(
         Span::styled(
-            "Press Enter to Save Changes, Esc to Exit, Tab to Cycle Focus",
+            "Press Enter to Save Changes, Esc to Exit",
             Style::default()
             .fg(Color::Red)
             .add_modifier(Modifier::BOLD)
@@ -485,6 +486,19 @@ fn render_task_editor<B: Backend>(
         .alignment(Alignment::Center);
 
     frame.render_widget(info, chunks[3]);
+
+    let info = Paragraph::new(
+        Span::styled(
+            "Press Tab to Cycle Focus, Delete to Clear Input",
+            Style::default()
+            .fg(Color::Red)
+            .add_modifier(Modifier::BOLD)
+        ))
+        .block(Block::default())
+        .wrap(Wrap { trim: true })
+        .alignment(Alignment::Center);
+
+    frame.render_widget(info, chunks[4]);
 }
 
 fn render_list_editor<B: Backend>(
@@ -493,7 +507,7 @@ fn render_list_editor<B: Backend>(
     editor_title: String,
 ) {
     let size = frame.size();
-    let area = centered_fixed_size_rect((size.width as f32 * 0.6) as usize, 6, size);
+    let area = centered_fixed_size_rect((size.width as f32 * 0.6) as usize, 7, size);
     let area_block = Block::default()
         .title(
             Span::styled(
@@ -516,6 +530,7 @@ fn render_list_editor<B: Backend>(
         .constraints(
             [
             Constraint::Length(3),
+            Constraint::Length(1),
             Constraint::Length(1),
             ]
             .as_ref()
@@ -552,6 +567,19 @@ fn render_list_editor<B: Backend>(
         .alignment(Alignment::Center);
 
     frame.render_widget(info, chunks[1]);
+
+    let info = Paragraph::new(
+        Span::styled(
+            "Press Delete to Clear Input",
+            Style::default()
+            .fg(Color::Red)
+            .add_modifier(Modifier::BOLD)
+        ))
+        .block(Block::default())
+        .wrap(Wrap { trim: true })
+        .alignment(Alignment::Center);
+
+    frame.render_widget(info, chunks[2]);
 }
 
 fn render_prompt<B: Backend>(

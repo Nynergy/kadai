@@ -249,7 +249,7 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                     match key.code {
                         KeyCode::Char(c) => app.add_to_detail_input(c),
                         KeyCode::Backspace => app.delete_from_detail_input(),
-                        // TODO: Hit Delete to clear the focused input
+                        KeyCode::Delete => app.clear_focused_input(),
                         KeyCode::Tab => app.next_detail_input(),
                         KeyCode::Enter => {
                             app.save_details_to_task();
@@ -263,7 +263,7 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                     match key.code {
                         KeyCode::Char(c) => app.add_to_detail_input(c),
                         KeyCode::Backspace => app.delete_from_detail_input(),
-                        // TODO: Hit Delete to clear the focused input
+                        KeyCode::Delete => app.clear_focused_input(),
                         KeyCode::Tab => app.next_detail_input(),
                         KeyCode::Enter => {
                             app.save_details_to_task();
@@ -292,7 +292,7 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                     match key.code {
                         KeyCode::Char(c) => app.add_to_detail_input(c),
                         KeyCode::Backspace => app.delete_from_detail_input(),
-                        // TODO: Hit Delete to clear the focused input
+                        KeyCode::Delete => app.clear_focused_input(),
                         KeyCode::Enter => {
                             app.save_details_to_list();
                             app.change_state(*prev);
@@ -305,7 +305,7 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                     match key.code {
                         KeyCode::Char(c) => app.add_to_detail_input(c),
                         KeyCode::Backspace => app.delete_from_detail_input(),
-                        // TODO: Hit Delete to clear the focused input
+                        KeyCode::Delete => app.clear_focused_input(),
                         KeyCode::Enter => {
                             app.save_details_to_list();
                             app.change_state(*prev);
