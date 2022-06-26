@@ -93,7 +93,7 @@ Key | Action
 <kbd>g</kbd> and <kbd>G</kbd> | jump to top or bottom of list
 <kbd>c</kbd> and <kbd>C</kbd> | cycle focused list color
 <kbd>Space</kbd> and <kbd>Backspace</kbd> | move focused task to next/previous list
-<kbd>Enter</kbd> | View focused task details
+<kbd>Enter</kbd> | view focused task details
 <kbd>b</kbd> | open backlog popup
 <kbd>B</kbd> | move focused task to backlog
 <kbd>a</kbd> | open archive popup
@@ -120,7 +120,7 @@ Key | Action
 <kbd>g</kbd> and <kbd>G</kbd> | jump to top or bottom of list
 <kbd>c</kbd> and <kbd>C</kbd> | cycle backlog list color
 <kbd>Space</kbd> | move focused task to first list
-<kbd>Enter</kbd> | View focused task details
+<kbd>Enter</kbd> | view focused task details
 <kbd>b</kbd> | close backlog popup
 <kbd>a</kbd> | open archive popup
 
@@ -135,7 +135,7 @@ Key | Action
 <kbd>g</kbd> and <kbd>G</kbd> | jump to top or bottom of list
 <kbd>c</kbd> and <kbd>C</kbd> | cycle backlog list color
 <kbd>Space</kbd> | move focused task to last list
-<kbd>Enter</kbd> | View focused task details
+<kbd>Enter</kbd> | view focused task details
 <kbd>b</kbd> | open backlog popup
 <kbd>a</kbd> | close archive popup
 
