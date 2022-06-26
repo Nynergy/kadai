@@ -127,6 +127,41 @@ impl App {
         }
     }
 
+    pub fn task_up(&mut self) {
+        let list = match self.state {
+            AppState::Tracker => &mut self.task_lists[self.active_list],
+            AppState::BacklogPopup(_) => &mut self.backlog,
+            AppState::ArchivePopup(_) => &mut self.archive,
+            _ => return
+        };
+
+        if let Some(i) = list.state.selected() {
+            if let Some(index) = i.checked_sub(1) {
+                list.tasks.swap(i, index);
+                list.state.select(Some(index));
+            }
+        }
+    }
+
+    pub fn task_down(&mut self) {
+        let list = match self.state {
+            AppState::Tracker => &mut self.task_lists[self.active_list],
+            AppState::BacklogPopup(_) => &mut self.backlog,
+            AppState::ArchivePopup(_) => &mut self.archive,
+            _ => return
+        };
+
+        if let Some(i) = list.state.selected() {
+            let mut index = i + 1;
+            if index >= list.tasks.len() {
+                index = list.tasks.len() - 1;
+            }
+
+            list.tasks.swap(i, index);
+            list.state.select(Some(index));
+        }
+    }
+
     pub fn move_task_to_next_list(&mut self) {
         if self.active_list != self.task_lists.len() - 1 {
             let list = &mut self.task_lists[self.active_list];

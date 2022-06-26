@@ -115,6 +115,7 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
             match state {
                 AppState::Tracker => {
                     match key.code {
+                        KeyCode::Char('q') => break,
                         KeyCode::Char('n') => {
                             app.clear_detail_inputs();
                             app.reset_active_detail_input();
@@ -143,11 +144,14 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                             app.populate_list_detail_inputs();
                             app.change_state(AppState::EditList(Box::new(state)));
                         },
-                        KeyCode::Char('q') => break,
                         KeyCode::Char('j') => app.list_down(),
                         KeyCode::Char('k') => app.list_up(),
                         KeyCode::Char('h') => app.prev_list(),
                         KeyCode::Char('l') => app.next_list(),
+                        KeyCode::Char('J') => app.task_down(),
+                        KeyCode::Char('K') => app.task_up(),
+                        // TODO: Move list left
+                        // TODO: Move list right
                         KeyCode::Char('c') => app.cycle_list_color(1),
                         KeyCode::Char('C') => app.cycle_list_color(-1),
                         KeyCode::Char(' ') => app.move_task_to_next_list(),
@@ -178,6 +182,7 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                 },
                 AppState::BacklogPopup(prev) => {
                     match key.code {
+                        KeyCode::Char('q') => break,
                         KeyCode::Char('n') => {
                             app.clear_detail_inputs();
                             app.reset_active_detail_input();
@@ -195,9 +200,10 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                                 app.change_state(AppState::EditTask(Box::new(AppState::BacklogPopup(prev))));
                             }
                         },
-                        KeyCode::Char('q') => break,
                         KeyCode::Char('j') => app.list_down(),
                         KeyCode::Char('k') => app.list_up(),
+                        KeyCode::Char('J') => app.task_down(),
+                        KeyCode::Char('K') => app.task_up(),
                         KeyCode::Char(' ') => app.move_task_to_list(0),
                         KeyCode::Char('c') => app.cycle_list_color(1),
                         KeyCode::Char('C') => app.cycle_list_color(-1),
@@ -213,14 +219,16 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                 },
                 AppState::ArchivePopup(prev) => {
                     match key.code {
+                        KeyCode::Char('q') => break,
                         KeyCode::Char('d') => {
                             if !app.focused_list_is_empty() {
                                 app.change_state(AppState::DeleteTask(Box::new(AppState::ArchivePopup(prev))));
                             }
                         },
-                        KeyCode::Char('q') => break,
                         KeyCode::Char('j') => app.list_down(),
                         KeyCode::Char('k') => app.list_up(),
+                        KeyCode::Char('J') => app.task_down(),
+                        KeyCode::Char('K') => app.task_up(),
                         KeyCode::Char(' ') => {
                             let dest_index = app.task_lists.len() - 1;
                             app.move_task_to_list(dest_index);
