@@ -8,7 +8,7 @@ A TUI task tracker written in Rust
 
 ## What is kadai and why does it exist?
 
-_kadai_ is a [kanban-style](https://en.wikipedia.org/wiki/Kanban_(development\))
+_kadai_ is a [kanban-style](https://en.wikipedia.org/wiki/Kanban_(development))
 task tracker for the terminal. It tries to be simplistic, but also highly
 configurable to whatever project you might be working on.
 
