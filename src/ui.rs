@@ -475,11 +475,26 @@ fn render_task_editor<B: Backend>(
 
     frame.render_widget(category, chunks[2]);
 
+    // Display the blinking cursor, wrapped appropriately
     let i = app.active_detail_input;
-    frame.set_cursor(
-        chunks[i].x + app.task_detail_inputs[i].len() as u16 + 1,
-        chunks[i].y + 1
-    );
+    let input = &app.task_detail_inputs[i];
+    let trailing_space = &input[input.len() - 1..] == " ";
+    let inputs = wrap(&input, chunks[i].width as usize - 2);
+    let input = &mut inputs[inputs.len() - 1].to_string();
+    if trailing_space {
+        input.push(' ');
+    }
+    if input.len() < chunks[i].width as usize - 2 {
+        frame.set_cursor(
+            chunks[i].x + input.len() as u16 + 1,
+            chunks[i].y + inputs.len() as u16
+        );
+    } else {
+        frame.set_cursor(
+            chunks[i].x + 1,
+            chunks[i].y + inputs.len() as u16 + 1
+        );
+    }
 
     let info = Paragraph::new(
         Span::styled(
