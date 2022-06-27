@@ -15,16 +15,16 @@ pub fn handle_events(app: &mut App) -> io::Result<()> {
         let state = app.state.clone();
         match state {
             AppState::Tracker => {
-                handle_tracker_events(key, app, state);
+                handle_tracker_events(key, app, state)?;
             },
             AppState::TaskView(prev) => {
-                handle_task_view_events(key, app, *prev);
+                handle_task_view_events(key, app, *prev)?;
             },
             AppState::BacklogPopup(prev) => {
-                handle_backlog_popup_events(key, app, *prev);
+                handle_backlog_popup_events(key, app, *prev)?;
             },
             AppState::ArchivePopup(prev) => {
-                handle_archive_popup_events(key, app, *prev);
+                handle_archive_popup_events(key, app, *prev)?;
             },
             AppState::EditTask(prev) => {
                 handle_edit_task_events(key, app, *prev);
@@ -50,9 +50,10 @@ pub fn handle_events(app: &mut App) -> io::Result<()> {
     Ok(())
 }
 
-fn handle_tracker_events(key: KeyEvent, app: &mut App, state: AppState) {
+fn handle_tracker_events(key: KeyEvent, app: &mut App, state: AppState) -> Result<(), io::Error> {
     match key.code {
         KeyCode::Char('q') => app.set_quit(true),
+        KeyCode::Char('s') => app.save_changes()?,
         KeyCode::Char('n') => {
             app.clear_detail_inputs();
             app.reset_active_detail_input();
@@ -106,11 +107,14 @@ fn handle_tracker_events(key: KeyEvent, app: &mut App, state: AppState) {
         KeyCode::Char('A') => app.move_task_to_archive(),
         _ => {}
     }
+
+    Ok(())
 }
 
-fn handle_task_view_events(key: KeyEvent, app: &mut App, prev: AppState) {
+fn handle_task_view_events(key: KeyEvent, app: &mut App, prev: AppState) -> Result<(), io::Error> {
     match key.code {
         KeyCode::Char('q') => app.set_quit(true),
+        KeyCode::Char('s') => app.save_changes()?,
         KeyCode::Char('j') => app.scroll_details(1),
         KeyCode::Char('k') => app.scroll_details(-1),
         KeyCode::Enter => {
@@ -119,11 +123,14 @@ fn handle_task_view_events(key: KeyEvent, app: &mut App, prev: AppState) {
         },
         _ => {}
     }
+
+    Ok(())
 }
 
-fn handle_backlog_popup_events(key: KeyEvent, app: &mut App, prev: AppState) {
+fn handle_backlog_popup_events(key: KeyEvent, app: &mut App, prev: AppState) -> Result<(), io::Error> {
     match key.code {
         KeyCode::Char('q') => app.set_quit(true),
+        KeyCode::Char('s') => app.save_changes()?,
         KeyCode::Char('n') => {
             app.clear_detail_inputs();
             app.reset_active_detail_input();
@@ -195,11 +202,14 @@ fn handle_backlog_popup_events(key: KeyEvent, app: &mut App, prev: AppState) {
         },
         _ => {}
     }
+
+    Ok(())
 }
 
-fn handle_archive_popup_events(key: KeyEvent, app: &mut App, prev: AppState) {
+fn handle_archive_popup_events(key: KeyEvent, app: &mut App, prev: AppState) -> Result<(), io::Error> {
     match key.code {
         KeyCode::Char('q') => app.set_quit(true),
+        KeyCode::Char('s') => app.save_changes()?,
         KeyCode::Char('d') => {
             if !app.focused_list_is_empty() {
                 app.change_state(
@@ -246,6 +256,8 @@ fn handle_archive_popup_events(key: KeyEvent, app: &mut App, prev: AppState) {
         },
         _ => {}
     }
+
+    Ok(())
 }
 
 fn handle_edit_task_events(key: KeyEvent, app: &mut App, prev: AppState) {
