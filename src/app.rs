@@ -2,9 +2,9 @@ use std::{cmp, env, fs};
 
 use crate::task_list::*;
 
-const TRACKER_FILE: &str = "./tracker.json";
-const BACKLOG_FILE: &str = "./backlog.json";
-const ARCHIVE_FILE: &str = "./archive.json";
+const TRACKER_FILE: &str = "tracker.json";
+const BACKLOG_FILE: &str = "backlog.json";
+const ARCHIVE_FILE: &str = "archive.json";
 
 #[derive(Clone)]
 pub enum AppState {
@@ -21,6 +21,7 @@ pub enum AppState {
 }
 
 pub struct App {
+    pub quit: bool,
     pub state: AppState,
     pub task_lists: Vec<TaskList>,
     pub active_list: usize,
@@ -35,6 +36,7 @@ pub struct App {
 impl App {
     pub fn create() -> Result<Self, std::io::Error> {
         let mut app = Self {
+            quit: false,
             state: AppState::Tracker,
             task_lists: read_tracker_file()?,
             active_list: 0,
@@ -61,17 +63,43 @@ impl App {
         Ok(app)
     }
 
-    pub fn list_down(&mut self) {
-        let list: &mut TaskList;
+    pub fn set_quit(&mut self, quit: bool) {
+        self.quit = quit;
+    }
 
-        match self.state {
-            AppState::Tracker => {
-                list = &mut self.task_lists[self.active_list];
-            },
-            AppState::BacklogPopup(_) => list = &mut self.backlog,
-            AppState::ArchivePopup(_) => list = &mut self.archive,
-            _ => return
+    fn get_focused_list(&self, state: &AppState) -> &TaskList {
+        match state {
+            AppState::Tracker => &self.task_lists[self.active_list],
+            AppState::BacklogPopup(_) => &self.backlog,
+            AppState::ArchivePopup(_) => &self.archive,
+            AppState::TaskView(prev) => self.get_focused_list(&*prev),
+            AppState::EditTask(prev) => self.get_focused_list(&*prev),
+            AppState::CreateTask(prev) => self.get_focused_list(&*prev),
+            AppState::DeleteTask(prev) => self.get_focused_list(&*prev),
+            AppState::EditList(prev) => self.get_focused_list(&*prev),
+            AppState::CreateList(prev) => self.get_focused_list(&*prev),
+            AppState::DeleteList(prev) => self.get_focused_list(&*prev),
         }
+    }
+
+
+    fn get_mut_focused_list(&mut self, state: &AppState) -> &mut TaskList {
+        match state {
+            AppState::Tracker => &mut self.task_lists[self.active_list],
+            AppState::BacklogPopup(_) => &mut self.backlog,
+            AppState::ArchivePopup(_) => &mut self.archive,
+            AppState::TaskView(prev) => self.get_mut_focused_list(&*prev),
+            AppState::EditTask(prev) => self.get_mut_focused_list(&*prev),
+            AppState::CreateTask(prev) => self.get_mut_focused_list(&*prev),
+            AppState::DeleteTask(prev) => self.get_mut_focused_list(&*prev),
+            AppState::EditList(prev) => self.get_mut_focused_list(&*prev),
+            AppState::CreateList(prev) => self.get_mut_focused_list(&*prev),
+            AppState::DeleteList(prev) => self.get_mut_focused_list(&*prev),
+        }
+    }
+
+    pub fn list_down(&mut self) {
+        let list = self.get_mut_focused_list(&self.state.clone());
 
         if !list.tasks.is_empty() {
             let i = match list.state.selected() {
@@ -89,16 +117,7 @@ impl App {
     }
 
     pub fn list_up(&mut self) {
-        let list: &mut TaskList;
-
-        match self.state {
-            AppState::Tracker => {
-                list = &mut self.task_lists[self.active_list];
-            },
-            AppState::BacklogPopup(_) => list = &mut self.backlog,
-            AppState::ArchivePopup(_) => list = &mut self.archive,
-            _ => return
-        }
+        let list = self.get_mut_focused_list(&self.state.clone());
 
         if !list.tasks.is_empty() {
             let i = match list.state.selected() {
@@ -128,12 +147,7 @@ impl App {
     }
 
     pub fn task_up(&mut self) {
-        let list = match self.state {
-            AppState::Tracker => &mut self.task_lists[self.active_list],
-            AppState::BacklogPopup(_) => &mut self.backlog,
-            AppState::ArchivePopup(_) => &mut self.archive,
-            _ => return
-        };
+        let list = self.get_mut_focused_list(&self.state.clone());
 
         if let Some(i) = list.state.selected() {
             if let Some(index) = i.checked_sub(1) {
@@ -144,12 +158,7 @@ impl App {
     }
 
     pub fn task_down(&mut self) {
-        let list = match self.state {
-            AppState::Tracker => &mut self.task_lists[self.active_list],
-            AppState::BacklogPopup(_) => &mut self.backlog,
-            AppState::ArchivePopup(_) => &mut self.archive,
-            _ => return
-        };
+        let list = self.get_mut_focused_list(&self.state.clone());
 
         if let Some(i) = list.state.selected() {
             let mut index = i + 1;
@@ -163,12 +172,7 @@ impl App {
     }
 
     pub fn jump_to_list_top(&mut self) {
-        let list = match self.state {
-            AppState::Tracker => &mut self.task_lists[self.active_list],
-            AppState::BacklogPopup(_) => &mut self.backlog,
-            AppState::ArchivePopup(_) => &mut self.archive,
-            _ => return
-        };
+        let list = self.get_mut_focused_list(&self.state.clone());
 
         if let Some(_) = list.state.selected() {
             list.state.select(Some(0));
@@ -176,12 +180,7 @@ impl App {
     }
 
     pub fn jump_to_list_bottom(&mut self) {
-        let list = match self.state {
-            AppState::Tracker => &mut self.task_lists[self.active_list],
-            AppState::BacklogPopup(_) => &mut self.backlog,
-            AppState::ArchivePopup(_) => &mut self.archive,
-            _ => return
-        };
+        let list = self.get_mut_focused_list(&self.state.clone());
 
         if let Some(_) = list.state.selected() {
             list.state.select(Some(list.tasks.len() - 1));
@@ -258,13 +257,7 @@ impl App {
             return;
         }
 
-        let list: &mut TaskList;
-
-        match self.state {
-            AppState::BacklogPopup(_) => list = &mut self.backlog,
-            AppState::ArchivePopup(_) => list = &mut self.archive,
-            _ => return
-        }
+        let list = self.get_mut_focused_list(&self.state.clone());
 
         if let Some(i) = list.state.selected() {
             let task = list.tasks.remove(i);
@@ -283,68 +276,44 @@ impl App {
     }
 
     pub fn move_task_to_backlog(&mut self) {
-        match self.state {
-            AppState::Tracker => {
-                let list = &mut self.task_lists[self.active_list];
-                if let Some(i) = list.state.selected() {
-                    let task = list.tasks.remove(i);
-                    if list.tasks.len() == 0 {
-                        list.state.select(None);
-                    } else if i == list.tasks.len() {
-                        list.state.select(Some(i - 1));
-                    }
+        let list = &mut self.task_lists[self.active_list];
 
-                    let dest = &mut self.backlog;
-                    dest.tasks.push(task);
-                    if dest.tasks.len() == 1 {
-                        dest.state.select(Some(0));
-                    }
-                }
-            },
-            _ => {}
+        if let Some(i) = list.state.selected() {
+            let task = list.tasks.remove(i);
+            if list.tasks.len() == 0 {
+                list.state.select(None);
+            } else if i == list.tasks.len() {
+                list.state.select(Some(i - 1));
+            }
+
+            let dest = &mut self.backlog;
+            dest.tasks.push(task);
+            if dest.tasks.len() == 1 {
+                dest.state.select(Some(0));
+            }
         }
     }
 
     pub fn move_task_to_archive(&mut self) {
-        match self.state {
-            AppState::Tracker => {
-                let list = &mut self.task_lists[self.active_list];
-                if let Some(i) = list.state.selected() {
-                    let task = list.tasks.remove(i);
-                    if list.tasks.len() == 0 {
-                        list.state.select(None);
-                    } else if i == list.tasks.len() {
-                        list.state.select(Some(i - 1));
-                    }
+        let list = &mut self.task_lists[self.active_list];
+        if let Some(i) = list.state.selected() {
+            let task = list.tasks.remove(i);
+            if list.tasks.len() == 0 {
+                list.state.select(None);
+            } else if i == list.tasks.len() {
+                list.state.select(Some(i - 1));
+            }
 
-                    let dest = &mut self.archive;
-                    dest.tasks.push(task);
-                    if dest.tasks.len() == 1 {
-                        dest.state.select(Some(0));
-                    }
-                }
-            },
-            _ => {}
+            let dest = &mut self.archive;
+            dest.tasks.push(task);
+            if dest.tasks.len() == 1 {
+                dest.state.select(Some(0));
+            }
         }
     }
 
     pub fn change_state(&mut self, state: AppState) {
         self.state = state;
-    }
-
-    fn get_focused_list(&self, state: &AppState) -> &TaskList {
-        match state {
-            AppState::Tracker => &self.task_lists[self.active_list],
-            AppState::BacklogPopup(_) => &self.backlog,
-            AppState::ArchivePopup(_) => &self.archive,
-            AppState::TaskView(prev) => self.get_focused_list(&*prev),
-            AppState::EditTask(prev) => self.get_focused_list(&*prev),
-            AppState::CreateTask(prev) => self.get_focused_list(&*prev),
-            AppState::DeleteTask(prev) => self.get_focused_list(&*prev),
-            AppState::EditList(prev) => self.get_focused_list(&*prev),
-            AppState::CreateList(prev) => self.get_focused_list(&*prev),
-            AppState::DeleteList(prev) => self.get_focused_list(&*prev),
-        }
     }
 
     pub fn get_selected_task(&self) -> Option<&Task> {
@@ -375,12 +344,7 @@ impl App {
     }
 
     pub fn cycle_list_color(&mut self, amount: i8) {
-        let list = match self.state {
-            AppState::Tracker => &mut self.task_lists[self.active_list],
-            AppState::BacklogPopup(_) => &mut self.backlog,
-            AppState::ArchivePopup(_) => &mut self.archive,
-            _ => return
-        };
+        let list = self.get_mut_focused_list(&self.state.clone());
 
         let mut new_color = list.color_index as i8 + amount;
         if new_color < 1 {

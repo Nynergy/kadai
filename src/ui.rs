@@ -3,7 +3,14 @@ use textwrap::wrap;
 use tui::{
     backend::Backend,
     buffer::Buffer,
-    layout::{Alignment, Constraint, Direction, Layout, Margin, Rect},
+    layout::{
+        Alignment,
+        Constraint,
+        Direction,
+        Layout,
+        Margin,
+        Rect
+    },
     style::{Color, Modifier, Style},
     symbols::line,
     text::{Span, Spans},
