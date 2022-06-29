@@ -420,7 +420,15 @@ impl App {
 
     pub fn next_detail_input(&mut self) {
         self.active_detail_input += 1;
-        self.active_detail_input %= 3;
+        self.active_detail_input %= self.task_detail_inputs.len();
+    }
+
+    pub fn prev_detail_input(&mut self) {
+        let res = self.active_detail_input.checked_sub(1);
+        match res {
+            Some(i) => self.active_detail_input = i,
+            None => self.active_detail_input = self.task_detail_inputs.len() - 1
+        }
     }
 
     pub fn reset_active_detail_input(&mut self) {

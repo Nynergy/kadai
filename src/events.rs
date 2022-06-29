@@ -54,6 +54,7 @@ pub fn handle_events(app: &mut App) -> io::Result<()> {
 fn handle_tracker_events(key: KeyEvent, app: &mut App, state: AppState) -> Result<(), io::Error> {
     match key.code {
         KeyCode::Char('q') => app.set_quit(true),
+        KeyCode::Esc => app.set_quit(true),
         KeyCode::Char('s') => app.save_changes()?,
         KeyCode::Char('n') => {
             app.clear_detail_inputs();
@@ -84,15 +85,45 @@ fn handle_tracker_events(key: KeyEvent, app: &mut App, state: AppState) -> Resul
             app.change_state(AppState::EditList(Box::new(state)));
         },
         KeyCode::Char('j') => app.list_down(),
-        KeyCode::Char('k') => app.list_up(),
-        KeyCode::Char('h') => app.prev_list(),
-        KeyCode::Char('l') => app.next_list(),
         KeyCode::Char('J') => app.task_down(),
+        KeyCode::Down => {
+            match key.modifiers {
+                KeyModifiers::NONE => app.list_down(),
+                KeyModifiers::CONTROL => app.task_down(),
+                _ => {}
+            }
+        },
+        KeyCode::Char('k') => app.list_up(),
         KeyCode::Char('K') => app.task_up(),
+        KeyCode::Up => {
+            match key.modifiers {
+                KeyModifiers::NONE => app.list_up(),
+                KeyModifiers::CONTROL => app.task_up(),
+                _ => {}
+            }
+        },
+        KeyCode::Char('h') => app.prev_list(),
         KeyCode::Char('H') => app.list_left(),
+        KeyCode::Left => {
+            match key.modifiers {
+                KeyModifiers::NONE => app.prev_list(),
+                KeyModifiers::CONTROL => app.list_left(),
+                _ => {}
+            }
+        },
+        KeyCode::Char('l') => app.next_list(),
         KeyCode::Char('L') => app.list_right(),
+        KeyCode::Right => {
+            match key.modifiers {
+                KeyModifiers::NONE => app.next_list(),
+                KeyModifiers::CONTROL => app.list_right(),
+                _ => {}
+            }
+        },
         KeyCode::Char('g') => app.jump_to_list_top(),
+        KeyCode::Home => app.jump_to_list_top(),
         KeyCode::Char('G') => app.jump_to_list_bottom(),
+        KeyCode::End => app.jump_to_list_bottom(),
         KeyCode::Char('c') => app.cycle_list_color(1),
         KeyCode::Char('C') => app.cycle_list_color(-1),
         KeyCode::Char(' ') => app.move_task_to_next_list(),
@@ -117,7 +148,9 @@ fn handle_task_view_events(key: KeyEvent, app: &mut App, prev: AppState) -> Resu
         KeyCode::Char('q') => app.set_quit(true),
         KeyCode::Char('s') => app.save_changes()?,
         KeyCode::Char('j') => app.scroll_details(1),
+        KeyCode::Down => app.scroll_details(1),
         KeyCode::Char('k') => app.scroll_details(-1),
+        KeyCode::Up => app.scroll_details(-1),
         KeyCode::Enter => {
             app.reset_scroll();
             app.change_state(prev);
@@ -174,15 +207,32 @@ fn handle_backlog_popup_events(key: KeyEvent, app: &mut App, prev: AppState) -> 
             }
         },
         KeyCode::Char('j') => app.list_down(),
-        KeyCode::Char('k') => app.list_up(),
         KeyCode::Char('J') => app.task_down(),
+        KeyCode::Down => {
+            match key.modifiers {
+                KeyModifiers::NONE => app.list_down(),
+                KeyModifiers::CONTROL => app.task_down(),
+                _ => {}
+            }
+        },
+        KeyCode::Char('k') => app.list_up(),
         KeyCode::Char('K') => app.task_up(),
+        KeyCode::Up => {
+            match key.modifiers {
+                KeyModifiers::NONE => app.list_up(),
+                KeyModifiers::CONTROL => app.task_up(),
+                _ => {}
+            }
+        },
         KeyCode::Char('g') => app.jump_to_list_top(),
+        KeyCode::Home => app.jump_to_list_top(),
         KeyCode::Char('G') => app.jump_to_list_bottom(),
+        KeyCode::End => app.jump_to_list_bottom(),
         KeyCode::Char(' ') => app.move_task_to_list(0),
         KeyCode::Char('c') => app.cycle_list_color(1),
         KeyCode::Char('C') => app.cycle_list_color(-1),
         KeyCode::Char('b') => app.change_state(prev),
+        KeyCode::Esc => app.change_state(prev),
         KeyCode::Char('a') => app.change_state(
             AppState::ArchivePopup(
                 Box::new(prev)
@@ -225,11 +275,27 @@ fn handle_archive_popup_events(key: KeyEvent, app: &mut App, prev: AppState) -> 
             }
         },
         KeyCode::Char('j') => app.list_down(),
-        KeyCode::Char('k') => app.list_up(),
         KeyCode::Char('J') => app.task_down(),
+        KeyCode::Down => {
+            match key.modifiers {
+                KeyModifiers::NONE => app.list_down(),
+                KeyModifiers::CONTROL => app.task_down(),
+                _ => {}
+            }
+        },
+        KeyCode::Char('k') => app.list_up(),
         KeyCode::Char('K') => app.task_up(),
+        KeyCode::Up => {
+            match key.modifiers {
+                KeyModifiers::NONE => app.list_up(),
+                KeyModifiers::CONTROL => app.task_up(),
+                _ => {}
+            }
+        },
         KeyCode::Char('g') => app.jump_to_list_top(),
+        KeyCode::Home => app.jump_to_list_top(),
         KeyCode::Char('G') => app.jump_to_list_bottom(),
+        KeyCode::End => app.jump_to_list_bottom(),
         KeyCode::Char(' ') => {
             let dest_index = app.task_lists.len() - 1;
             app.move_task_to_list(dest_index);
@@ -237,6 +303,7 @@ fn handle_archive_popup_events(key: KeyEvent, app: &mut App, prev: AppState) -> 
         KeyCode::Char('c') => app.cycle_list_color(1),
         KeyCode::Char('C') => app.cycle_list_color(-1),
         KeyCode::Char('a') => app.change_state(prev),
+        KeyCode::Esc => app.change_state(prev),
         KeyCode::Char('b') => app.change_state(
             AppState::BacklogPopup(
                 Box::new(prev)
@@ -283,6 +350,9 @@ fn handle_edit_task_events(key: KeyEvent, app: &mut App, prev: AppState) {
         KeyCode::Home => app.input_start(),
         KeyCode::End => app.input_end(),
         KeyCode::Tab => app.next_detail_input(),
+        KeyCode::BackTab => app.prev_detail_input(),
+        KeyCode::Down => app.next_detail_input(),
+        KeyCode::Up => app.prev_detail_input(),
         KeyCode::Enter => {
             app.save_details_to_task();
             app.change_state(prev);
@@ -314,6 +384,9 @@ fn handle_create_task_events(key: KeyEvent, app: &mut App, prev: AppState) {
         KeyCode::Home => app.input_start(),
         KeyCode::End => app.input_end(),
         KeyCode::Tab => app.next_detail_input(),
+        KeyCode::BackTab => app.prev_detail_input(),
+        KeyCode::Down => app.next_detail_input(),
+        KeyCode::Up => app.prev_detail_input(),
         KeyCode::Enter => {
             app.save_details_to_task();
             app.change_state(prev);
