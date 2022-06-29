@@ -3,7 +3,8 @@ use crossterm::{
         self,
         Event,
         KeyCode,
-        KeyEvent
+        KeyEvent,
+        KeyModifiers
     }
 };
 use std::io;
@@ -265,6 +266,22 @@ fn handle_edit_task_events(key: KeyEvent, app: &mut App, prev: AppState) {
         KeyCode::Char(c) => app.add_to_detail_input(c),
         KeyCode::Backspace => app.delete_from_detail_input(),
         KeyCode::Delete => app.clear_focused_input(),
+        KeyCode::Left => {
+            match key.modifiers {
+                KeyModifiers::NONE => app.input_left(),
+                KeyModifiers::CONTROL => app.input_jump_to_space_left(),
+                _ => {}
+            }
+        },
+        KeyCode::Right => {
+            match key.modifiers {
+                KeyModifiers::NONE => app.input_right(),
+                KeyModifiers::CONTROL => app.input_jump_to_space_right(),
+                _ => {}
+            }
+        },
+        KeyCode::Home => app.input_start(),
+        KeyCode::End => app.input_end(),
         KeyCode::Tab => app.next_detail_input(),
         KeyCode::Enter => {
             app.save_details_to_task();
@@ -280,6 +297,22 @@ fn handle_create_task_events(key: KeyEvent, app: &mut App, prev: AppState) {
         KeyCode::Char(c) => app.add_to_detail_input(c),
         KeyCode::Backspace => app.delete_from_detail_input(),
         KeyCode::Delete => app.clear_focused_input(),
+        KeyCode::Left => {
+            match key.modifiers {
+                KeyModifiers::NONE => app.input_left(),
+                KeyModifiers::CONTROL => app.input_jump_to_space_left(),
+                _ => {}
+            }
+        },
+        KeyCode::Right => {
+            match key.modifiers {
+                KeyModifiers::NONE => app.input_right(),
+                KeyModifiers::CONTROL => app.input_jump_to_space_right(),
+                _ => {}
+            }
+        },
+        KeyCode::Home => app.input_start(),
+        KeyCode::End => app.input_end(),
         KeyCode::Tab => app.next_detail_input(),
         KeyCode::Enter => {
             app.save_details_to_task();
@@ -311,6 +344,22 @@ fn handle_edit_list_events(key: KeyEvent, app: &mut App, prev: AppState) {
         KeyCode::Char(c) => app.add_to_detail_input(c),
         KeyCode::Backspace => app.delete_from_detail_input(),
         KeyCode::Delete => app.clear_focused_input(),
+        KeyCode::Left => {
+            match key.modifiers {
+                KeyModifiers::NONE => app.input_left(),
+                KeyModifiers::CONTROL => app.input_jump_to_space_left(),
+                _ => {}
+            }
+        },
+        KeyCode::Right => {
+            match key.modifiers {
+                KeyModifiers::NONE => app.input_right(),
+                KeyModifiers::CONTROL => app.input_jump_to_space_right(),
+                _ => {}
+            }
+        },
+        KeyCode::Home => app.input_start(),
+        KeyCode::End => app.input_end(),
         KeyCode::Enter => {
             app.save_details_to_list();
             app.change_state(prev);
@@ -325,6 +374,22 @@ fn handle_create_list_events(key: KeyEvent, app: &mut App, prev: AppState) {
         KeyCode::Char(c) => app.add_to_detail_input(c),
         KeyCode::Backspace => app.delete_from_detail_input(),
         KeyCode::Delete => app.clear_focused_input(),
+        KeyCode::Left => {
+            match key.modifiers {
+                KeyModifiers::NONE => app.input_left(),
+                KeyModifiers::CONTROL => app.input_jump_to_space_left(),
+                _ => {}
+            }
+        },
+        KeyCode::Right => {
+            match key.modifiers {
+                KeyModifiers::NONE => app.input_right(),
+                KeyModifiers::CONTROL => app.input_jump_to_space_right(),
+                _ => {}
+            }
+        },
+        KeyCode::Home => app.input_start(),
+        KeyCode::End => app.input_end(),
         KeyCode::Enter => {
             app.save_details_to_list();
             app.change_state(prev);

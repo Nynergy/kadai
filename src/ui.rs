@@ -478,23 +478,34 @@ fn render_task_editor<B: Backend>(
     // Display the blinking cursor, wrapped appropriately
     let i = app.active_detail_input;
     let input = &app.task_detail_inputs[i];
-    let trailing_space = &input[input.len() - 1..] == " ";
-    let inputs = wrap(&input, chunks[i].width as usize - 2);
-    let input = &mut inputs[inputs.len() - 1].to_string();
-    if trailing_space {
-        input.push(' ');
+    let input_width = chunks[i].width as usize - 2;
+    let trailing_spaces = &input.num_trailing_spaces();
+    let strings = wrap(&input.text, input_width);
+    let string = &mut strings[strings.len() - 1].to_string();
+    for _ in 0..*trailing_spaces {
+        string.push(' ');
     }
-    if input.len() < chunks[i].width as usize - 2 {
-        frame.set_cursor(
-            chunks[i].x + input.len() as u16 + 1,
-            chunks[i].y + inputs.len() as u16
-        );
-    } else {
-        frame.set_cursor(
-            chunks[i].x + 1,
-            chunks[i].y + inputs.len() as u16 + 1
-        );
+
+    let mut cursor_pos = (0, 0);
+    let mut running_pos = 0;
+    for line in strings.iter() {
+        let new_len = line.len() + running_pos + trailing_spaces;
+        if new_len < input.pos {
+            running_pos += line.len();
+            if line.len() < input_width {
+                running_pos += 1;
+            }
+            cursor_pos.1 += 1;
+        } else {
+            cursor_pos.0 = input.pos - running_pos;
+            break;
+        }
     }
+
+    frame.set_cursor(
+        chunks[i].x + cursor_pos.0 as u16 + 1,
+        chunks[i].y + cursor_pos.1 as u16 + 1
+    );
 
     let info = Paragraph::new(
         Span::styled(
@@ -572,9 +583,35 @@ fn render_list_editor<B: Backend>(
 
     frame.render_widget(name, chunks[0]);
 
+    // Display the blinking cursor, wrapped appropriately
+    let input = &app.list_detail_input;
+    let input_width = chunks[0].width as usize - 2;
+    let trailing_spaces = &input.num_trailing_spaces();
+    let strings = wrap(&input.text, input_width);
+    let string = &mut strings[strings.len() - 1].to_string();
+    for _ in 0..*trailing_spaces {
+        string.push(' ');
+    }
+
+    let mut cursor_pos = (0, 0);
+    let mut running_pos = 0;
+    for line in strings.iter() {
+        let new_len = line.len() + running_pos + trailing_spaces;
+        if new_len < input.pos {
+            running_pos += line.len();
+            if line.len() < input_width {
+                running_pos += 1;
+            }
+            cursor_pos.1 += 1;
+        } else {
+            cursor_pos.0 = input.pos - running_pos;
+            break;
+        }
+    }
+
     frame.set_cursor(
-        chunks[0].x + app.list_detail_input.len() as u16 + 1,
-        chunks[0].y + 1
+        chunks[0].x + cursor_pos.0 as u16 + 1,
+        chunks[0].y + cursor_pos.1 as u16 + 1
     );
 
     let info = Paragraph::new(

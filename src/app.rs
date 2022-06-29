@@ -1,5 +1,6 @@
 use std::{cmp, env, fs};
 
+use crate::inputs::*;
 use crate::task_list::*;
 
 const TRACKER_FILE: &str = "tracker.json";
@@ -28,9 +29,9 @@ pub struct App {
     pub backlog: TaskList,
     pub archive: TaskList,
     pub detail_scroll: u16,
-    pub task_detail_inputs: Vec<String>,
+    pub task_detail_inputs: Vec<Input>,
     pub active_detail_input: usize,
-    pub list_detail_input: String,
+    pub list_detail_input: Input,
 }
 
 impl App {
@@ -43,9 +44,9 @@ impl App {
             backlog: read_backlog_file()?,
             archive: read_archive_file()?,
             detail_scroll: 0,
-            task_detail_inputs: vec![String::new(); 3],
+            task_detail_inputs: vec![Input::new(); 3],
             active_detail_input: 0,
-            list_detail_input: String::new(),
+            list_detail_input: Input::new(),
         };
 
         for i in 0..app.task_lists.len() {
@@ -375,9 +376,9 @@ impl App {
                 None => category = String::new()
             }
 
-            self.task_detail_inputs[0] = task.summary.clone();
-            self.task_detail_inputs[1] = description;
-            self.task_detail_inputs[2] = category;
+            self.task_detail_inputs[0] = Input::from(task.summary.clone());
+            self.task_detail_inputs[1] = Input::from(description);
+            self.task_detail_inputs[2] = Input::from(category);
         }
     }
 
@@ -427,9 +428,9 @@ impl App {
     }
 
     pub fn save_details_to_task(&mut self) {
-        let summary = self.task_detail_inputs[0].drain(..).collect();
-        let desc = self.task_detail_inputs[1].drain(..).collect();
-        let cat = self.task_detail_inputs[2].drain(..).collect();
+        let summary = self.task_detail_inputs[0].extract();
+        let desc = self.task_detail_inputs[1].extract();
+        let cat = self.task_detail_inputs[2].extract();
 
         let description: Option<String>;
         if desc == "" {
@@ -509,11 +510,11 @@ impl App {
     pub fn populate_list_detail_inputs(&mut self) {
         let list = self.get_focused_list(&self.state);
 
-        self.list_detail_input = list.name.clone();
+        self.list_detail_input = Input::from(list.name.clone());
     }
 
     pub fn save_details_to_list(&mut self) {
-        let name = self.list_detail_input.drain(..).collect();
+        let name = self.list_detail_input.extract();
 
         match &self.state {
             AppState::EditList(prev) => {
@@ -581,6 +582,114 @@ impl App {
 
     pub fn clear_list_inputs(&mut self) {
         self.list_detail_input.clear();
+    }
+
+    pub fn input_left(&mut self) {
+        match self.state {
+            AppState::EditTask(_) => {
+                self.task_detail_inputs[self.active_detail_input].move_left();
+            },
+            AppState::CreateTask(_) => {
+                self.task_detail_inputs[self.active_detail_input].move_left();
+            },
+            AppState::EditList(_) => {
+                self.list_detail_input.move_left();
+            },
+            AppState::CreateList(_) => {
+                self.list_detail_input.move_left();
+            },
+            _ => {}
+        }
+    }
+
+    pub fn input_right(&mut self) {
+        match self.state {
+            AppState::EditTask(_) => {
+                self.task_detail_inputs[self.active_detail_input].move_right();
+            },
+            AppState::CreateTask(_) => {
+                self.task_detail_inputs[self.active_detail_input].move_right();
+            },
+            AppState::EditList(_) => {
+                self.list_detail_input.move_right();
+            },
+            AppState::CreateList(_) => {
+                self.list_detail_input.move_right();
+            },
+            _ => {}
+        }
+    }
+
+    pub fn input_start(&mut self) {
+        match self.state {
+            AppState::EditTask(_) => {
+                self.task_detail_inputs[self.active_detail_input].move_start();
+            },
+            AppState::CreateTask(_) => {
+                self.task_detail_inputs[self.active_detail_input].move_start();
+            },
+            AppState::EditList(_) => {
+                self.list_detail_input.move_start();
+            },
+            AppState::CreateList(_) => {
+                self.list_detail_input.move_start();
+            },
+            _ => {}
+        }
+    }
+
+    pub fn input_end(&mut self) {
+        match self.state {
+            AppState::EditTask(_) => {
+                self.task_detail_inputs[self.active_detail_input].move_end();
+            },
+            AppState::CreateTask(_) => {
+                self.task_detail_inputs[self.active_detail_input].move_end();
+            },
+            AppState::EditList(_) => {
+                self.list_detail_input.move_end();
+            },
+            AppState::CreateList(_) => {
+                self.list_detail_input.move_end();
+            },
+            _ => {}
+        }
+    }
+
+    pub fn input_jump_to_space_left(&mut self) {
+        match self.state {
+            AppState::EditTask(_) => {
+                self.task_detail_inputs[self.active_detail_input].move_to_prev_space();
+            },
+            AppState::CreateTask(_) => {
+                self.task_detail_inputs[self.active_detail_input].move_to_prev_space();
+            },
+            AppState::EditList(_) => {
+                self.list_detail_input.move_to_prev_space();
+            },
+            AppState::CreateList(_) => {
+                self.list_detail_input.move_to_prev_space();
+            },
+            _ => {}
+        }
+    }
+
+    pub fn input_jump_to_space_right(&mut self) {
+        match self.state {
+            AppState::EditTask(_) => {
+                self.task_detail_inputs[self.active_detail_input].move_to_next_space();
+            },
+            AppState::CreateTask(_) => {
+                self.task_detail_inputs[self.active_detail_input].move_to_next_space();
+            },
+            AppState::EditList(_) => {
+                self.list_detail_input.move_to_next_space();
+            },
+            AppState::CreateList(_) => {
+                self.list_detail_input.move_to_next_space();
+            },
+            _ => {}
+        }
     }
 }
 

@@ -26,6 +26,7 @@ use tui::{
 
 mod app;
 mod events;
+mod inputs;
 mod task_list;
 mod ui;
 
