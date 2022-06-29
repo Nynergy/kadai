@@ -145,21 +145,141 @@ fn render_tracker<B: Backend>(
     app: &mut App
 ) {
     let size = frame.size();
+
+    let chunks = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints(
+            [
+            Constraint::Length(3),
+            Constraint::Min(10),
+            ]
+            .as_ref()
+        )
+        .split(size);
+
+    render_info_bar(frame, app, chunks[0]);
+
     let list_width = size.width / app.task_lists.len() as u16;
 
     let mut constraints: Vec<Constraint> = Vec::new();
-    for _ in 0..app.task_lists.len() - 1 {
+    for _ in 0..app.task_lists.len() / 2 {
         constraints.push(Constraint::Length(list_width));
     }
     constraints.push(Constraint::Min(10));
+    if app.task_lists.len() % 2 == 0 {
+        for _ in 0..app.task_lists.len() / 2 - 1 {
+            constraints.push(Constraint::Length(list_width));
+        }
+    } else {
+        for _ in 0..app.task_lists.len() / 2 {
+            constraints.push(Constraint::Length(list_width));
+        }
+    }
 
     let chunks = Layout::default()
         .direction(Direction::Horizontal)
         .constraints(constraints.as_ref())
-        .split(size);
+        .split(chunks[1]);
 
     for i in 0..app.task_lists.len() {
         render_task_list(frame, app, chunks[i], i);
+    }
+}
+
+fn render_info_bar<B: Backend>(
+    frame: &mut Frame<B>,
+    app: &mut App,
+    area: Rect
+) {
+    let block = Block::default()
+        .borders(Borders::ALL);
+
+    frame.render_widget(block, area);
+
+    let inner_area = shrink_rect(area, 1);
+
+    let chunks = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints(
+            [
+            Constraint::Length(1),
+            Constraint::Min(10),
+            Constraint::Length(1),
+            ]
+            .as_ref()
+        )
+        .split(inner_area);
+
+    let left = Spans::from(vec![
+        Span::styled(
+            "Project: ",
+            Style::default()
+            .fg(Color::Red)
+            .add_modifier(Modifier::BOLD)
+        ),
+        Span::styled(
+            &app.project_title,
+            Style::default()
+            .add_modifier(Modifier::BOLD)
+        ),
+    ]);
+
+    let left = Paragraph::new(left)
+        .block(Block::default())
+        .wrap(Wrap { trim: true });
+
+    frame.render_widget(left, chunks[1]);
+
+    let right = Spans::from(vec![
+        Span::styled(
+            app.backlog.tasks.len().to_string(),
+            Style::default()
+            .fg(Color::Indexed(app.backlog.color_index))
+            .add_modifier(Modifier::BOLD)
+        ),
+        Span::styled(
+            " Backlogged",
+            Style::default()
+            .fg(Color::Indexed(app.backlog.color_index))
+            .add_modifier(Modifier::BOLD)
+        ),
+        Span::raw(" | "),
+        Span::styled(
+            app.archive.tasks.len().to_string(),
+            Style::default()
+            .fg(Color::Indexed(app.archive.color_index))
+            .add_modifier(Modifier::BOLD)
+        ),
+        Span::styled(
+            " Archived",
+            Style::default()
+            .fg(Color::Indexed(app.archive.color_index))
+            .add_modifier(Modifier::BOLD)
+        ),
+    ]);
+
+    let right = Paragraph::new(right)
+        .block(Block::default())
+        .alignment(Alignment::Right)
+        .wrap(Wrap { trim: true });
+
+    frame.render_widget(right, chunks[1]);
+
+    if app.unsaved_changes {
+        let middle = Spans::from(vec![
+            Span::styled(
+                "Unsaved Changes",
+                Style::default()
+                .add_modifier(Modifier::BOLD)
+            ),
+        ]);
+
+        let middle = Paragraph::new(middle)
+            .block(Block::default())
+            .alignment(Alignment::Center)
+            .wrap(Wrap { trim: true });
+
+        frame.render_widget(middle, chunks[1]);
     }
 }
 

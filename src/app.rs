@@ -22,6 +22,8 @@ pub enum AppState {
 }
 
 pub struct App {
+    pub project_title: String,
+    pub unsaved_changes: bool,
     pub quit: bool,
     pub state: AppState,
     pub task_lists: Vec<TaskList>,
@@ -35,8 +37,10 @@ pub struct App {
 }
 
 impl App {
-    pub fn create() -> Result<Self, std::io::Error> {
+    pub fn create(project_title: String) -> Result<Self, std::io::Error> {
         let mut app = Self {
+            project_title,
+            unsaved_changes: false,
             quit: false,
             state: AppState::Tracker,
             task_lists: read_tracker_file()?,
@@ -154,6 +158,8 @@ impl App {
             if let Some(index) = i.checked_sub(1) {
                 list.tasks.swap(i, index);
                 list.state.select(Some(index));
+
+                self.unsaved_changes = true;
             }
         }
     }
@@ -169,6 +175,8 @@ impl App {
 
             list.tasks.swap(i, index);
             list.state.select(Some(index));
+
+            self.unsaved_changes = true;
         }
     }
 
@@ -192,17 +200,21 @@ impl App {
         if let Some(index) = self.active_list.checked_sub(1) {
             self.task_lists.swap(self.active_list, index);
             self.active_list = index;
+
+            self.unsaved_changes = true;
         }
     }
 
     pub fn list_right(&mut self) {
-        let mut index = self.active_list + 1;
+        let index = self.active_list + 1;
         if index >= self.task_lists.len() {
-            index = self.task_lists.len() - 1;
+            return;
         }
 
         self.task_lists.swap(self.active_list, index);
         self.active_list = index;
+
+        self.unsaved_changes = true;
     }
 
     pub fn move_task_to_next_list(&mut self) {
@@ -223,6 +235,8 @@ impl App {
 
                     list.tasks.push(task);
                     list.state.select(Some(list.tasks.len() - 1));
+
+                    self.unsaved_changes = true;
                 },
                 None => return,
             }
@@ -247,6 +261,8 @@ impl App {
 
                     list.tasks.push(task);
                     list.state.select(Some(list.tasks.len() - 1));
+
+                    self.unsaved_changes = true;
                 },
                 None => return,
             }
@@ -273,6 +289,8 @@ impl App {
             if dest.tasks.len() == 1 {
                 dest.state.select(Some(0));
             }
+
+            self.unsaved_changes = true;
         }
     }
 
@@ -292,6 +310,8 @@ impl App {
             if dest.tasks.len() == 1 {
                 dest.state.select(Some(0));
             }
+
+            self.unsaved_changes = true;
         }
     }
 
@@ -310,6 +330,8 @@ impl App {
             if dest.tasks.len() == 1 {
                 dest.state.select(Some(0));
             }
+
+            self.unsaved_changes = true;
         }
     }
 
@@ -354,12 +376,15 @@ impl App {
             new_color = 1;
         }
         list.color_index = new_color as u8;
+
+        self.unsaved_changes = true;
     }
 
-    pub fn save_changes(&self) -> Result<(), std::io::Error> {
+    pub fn save_changes(&mut self) -> Result<(), std::io::Error> {
         save_tracker_file(&self.task_lists)?;
         save_backlog_file(&self.backlog)?;
         save_archive_file(&self.archive)?;
+        self.unsaved_changes = false;
         Ok(())
     }
 
@@ -489,6 +514,8 @@ impl App {
             },
             _ => {}
         }
+
+        self.unsaved_changes = true;
     }
 
     pub fn clear_detail_inputs(&mut self) {
@@ -552,6 +579,8 @@ impl App {
             },
             _ => {}
         }
+
+        self.unsaved_changes = true;
     }
 
     pub fn delete_highlighted_task(&mut self) {
@@ -570,6 +599,8 @@ impl App {
                 } else if i >= list.tasks.len() {
                     list.state.select(Some(i - 1));
                 }
+
+                self.unsaved_changes = true;
             }
         }
     }
@@ -582,6 +613,8 @@ impl App {
         } else if self.active_list >= self.task_lists.len() {
             self.active_list -= 1;
         }
+
+        self.unsaved_changes = true;
     }
 
     fn create_default_list(&mut self) {

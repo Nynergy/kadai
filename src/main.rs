@@ -47,7 +47,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     terminal.clear()?;
 
     // Application Entry Point
-    let mut app = App::create()?;
+    let mut app = App::create(args[1].clone())?;
     let res = run_app(&mut terminal, &mut app);
 
     // Restore Terminal
