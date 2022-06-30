@@ -155,6 +155,10 @@ fn handle_task_view_events(key: KeyEvent, app: &mut App, prev: AppState) -> Resu
             app.reset_scroll();
             app.change_state(prev);
         },
+        KeyCode::Esc => {
+            app.reset_scroll();
+            app.change_state(prev);
+        },
         _ => {}
     }
 

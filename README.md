@@ -41,9 +41,9 @@ archive list where you can store completed tasks that shouldn't be on the
 tracker anymore, but also shouldn't be deleted. Of course, you can permanently
 delete tasks and lists as you wish.
 
-__Note__: At the moment, _kadai_ will only save project data when it
-successfully closes, so if it crashes, you will lose any changes made since last
-save.
+Above all this information is a handy-dandy info bar that displays the name of
+the current project, the number of backlogged and archived tasks, and even a
+textual indicator in the center warning of unsaved changes.
 
 ## How can I compile and run it?
 
@@ -82,15 +82,16 @@ Keybindings for the various interfaces are the following:
 
 Key | Action
 ----|-------
-<kbd>q</kbd> | save and quit kadai
+<kbd>q</kbd> / <kbd>Esc</kbd> | save and quit kadai
+<kbd>s</kbd> | save without exiting
 <kbd>n</kbd> and <kbd>N</kbd> | add new task/list
 <kbd>e</kbd> and <kbd>E</kbd> | edit task/list
 <kbd>d</kbd> and <kbd>D</kbd> | delete focused task/list
-<kbd>j</kbd> and <kbd>k</kbd> | change task focus up and down
-<kbd>J</kbd> and <kbd>K</kbd> | move task up and down
-<kbd>h</kbd> and <kbd>l</kbd> | change list focus left and right
-<kbd>H</kbd> and <kbd>L</kbd> | move list left and right
-<kbd>g</kbd> and <kbd>G</kbd> | jump to top or bottom of list
+<kbd>j</kbd> and <kbd>k</kbd> / <kbd>Up</kbd> and <kbd>Down</kbd> | change task focus up and down
+<kbd>J</kbd> and <kbd>K</kbd> / <kbd>Ctrl + Up</kbd> and <kbd>Ctrl + Down</kbd> | move task up and down
+<kbd>h</kbd> and <kbd>l</kbd> / <kbd>Left</kbd> and <kbd>Right</kbd> | change list focus left and right
+<kbd>H</kbd> and <kbd>L</kbd> / <kbd>Ctrl + Left</kbd> and <kbd>Ctrl + Right</kbd>| move list left and right
+<kbd>g</kbd> and <kbd>G</kbd> / <kbd>Home</kbd> and <kbd>End</kbd>| jump to top or bottom of list
 <kbd>c</kbd> and <kbd>C</kbd> | cycle focused list color
 <kbd>Space</kbd> and <kbd>Backspace</kbd> | move focused task to next/previous list
 <kbd>Enter</kbd> | view focused task details
@@ -104,24 +105,26 @@ Key | Action
 Key | Action
 ----|-------
 <kbd>q</kbd> | save and quit kadai
-<kbd>j</kbd> and <kbd>k</kbd> | scroll details up and down
-<kbd>Enter</kbd> | exit task details view
+<kbd>s</kbd> | save without exiting
+<kbd>j</kbd> and <kbd>k</kbd> / <kbd>Up</kbd> and <kbd>Down</kbd> | scroll details up and down
+<kbd>Enter</kbd> / <kbd>Esc</kbd> | exit task details view
 
 #### Backlog Popup
 
 Key | Action
 ----|-------
-<kbd>q</kbd> | save and quit kadai
+<kbd>q</kbd> / <kbd>Esc</kbd> | save and quit kadai
+<kbd>s</kbd> | save without exiting
 <kbd>n</kbd> | add new task
 <kbd>e</kbd> | edit task
 <kbd>d</kbd> | delete focused task
-<kbd>j</kbd> and <kbd>k</kbd> | change task focus up and down
-<kbd>J</kbd> and <kbd>K</kbd> | move task up and down
-<kbd>g</kbd> and <kbd>G</kbd> | jump to top or bottom of list
+<kbd>j</kbd> and <kbd>k</kbd> / <kbd>Up</kbd> and <kbd>Down</kbd> | change task focus up and down
+<kbd>J</kbd> and <kbd>K</kbd> / <kbd>Ctrl + Up</kbd> and <kbd>Ctrl + Down</kbd> | move task up and down
+<kbd>g</kbd> and <kbd>G</kbd> / <kbd>Home</kbd> and <kbd>End</kbd>| jump to top or bottom of list
 <kbd>c</kbd> and <kbd>C</kbd> | cycle backlog list color
 <kbd>Space</kbd> | move focused task to first list
 <kbd>Enter</kbd> | view focused task details
-<kbd>b</kbd> | close backlog popup
+<kbd>b</kbd> / <kbd>Esc</kbd> | close backlog popup
 <kbd>a</kbd> | open archive popup
 
 #### Archive Popup
@@ -129,15 +132,16 @@ Key | Action
 Key | Action
 ----|-------
 <kbd>q</kbd> | save and quit kadai
+<kbd>s</kbd> | save without exiting
 <kbd>d</kbd> | delete focused task
-<kbd>j</kbd> and <kbd>k</kbd> | change task focus up and down
-<kbd>J</kbd> and <kbd>K</kbd> | move task up and down
-<kbd>g</kbd> and <kbd>G</kbd> | jump to top or bottom of list
+<kbd>j</kbd> and <kbd>k</kbd> / <kbd>Up</kbd> and <kbd>Down</kbd> | change task focus up and down
+<kbd>J</kbd> and <kbd>K</kbd> / <kbd>Ctrl + Up</kbd> and <kbd>Ctrl + Down</kbd> | move task up and down
+<kbd>g</kbd> and <kbd>G</kbd> / <kbd>Home</kbd> and <kbd>End</kbd>| jump to top or bottom of list
 <kbd>c</kbd> and <kbd>C</kbd> | cycle backlog list color
 <kbd>Space</kbd> | move focused task to last list
 <kbd>Enter</kbd> | view focused task details
 <kbd>b</kbd> | open backlog popup
-<kbd>a</kbd> | close archive popup
+<kbd>a</kbd> / <kbd>Esc</kbd> | close archive popup
 
 #### Edit/Create Task
 
@@ -146,7 +150,10 @@ Key | Action
 <kbd>Char</kbd> | enter character into focused input
 <kbd>Backspace</kbd> | delete character from focused input
 <kbd>Delete</kbd> | clear focused input
-<kbd>Tab</kbd> | cycle focused input
+<kbd>Left</kbd> and <kbd>Right</kbd> | move cursor position left and right
+<kbd>Ctrl + Left</kbd> and <kbd>Ctrl + Right</kbd> | move cursor left and right to nearest space
+<kbd>Home</kbd> and <kbd>End</kbd> | move cursor to beginning and end of input
+<kbd>Tab</kbd> and <kbd>Shift + Tab</kbd> / <kbd>Up</kbd> and <kbd>Down</kbd> | cycle focused input
 <kbd>Enter</kbd> | save task details and close editor
 <kbd>Esc</kbd> | close editor
 
@@ -157,6 +164,9 @@ Key | Action
 <kbd>Char</kbd> | enter character into focused input
 <kbd>Backspace</kbd> | delete character from focused input
 <kbd>Delete</kbd> | clear focused input
+<kbd>Left</kbd> and <kbd>Right</kbd> | move cursor position left and right
+<kbd>Ctrl + Left</kbd> and <kbd>Ctrl + Right</kbd> | move cursor left and right to nearest space
+<kbd>Home</kbd> and <kbd>End</kbd> | move cursor to beginning and end of input
 <kbd>Enter</kbd> | save list details and close editor
 <kbd>Esc</kbd> | close editor
 
