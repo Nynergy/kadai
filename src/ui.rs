@@ -29,7 +29,7 @@ use tui::{
 };
 
 use crate::app::*;
-use crate::task_list::*;
+use crate::lists::*;
 
 struct CustomBorder {
     title: String,
@@ -98,6 +98,9 @@ impl Widget for CustomBorder {
 
 pub fn ui<B: Backend>(frame: &mut Frame<B>, app: &mut App, state: AppState) {
     match state {
+        AppState::ProjectMenu => {
+            render_project_menu(frame, app);
+        },
         AppState::Tracker => {
             render_tracker(frame, app);
         },
@@ -138,6 +141,108 @@ pub fn ui<B: Backend>(frame: &mut Frame<B>, app: &mut App, state: AppState) {
             render_prompt(frame, app, "Delete Focused List?".to_string());
         },
     }
+}
+
+fn render_project_menu<B: Backend>(
+    frame: &mut Frame<B>,
+    app: &mut App
+) {
+    let size = frame.size();
+
+    let chunks = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints(
+            [
+            Constraint::Length(9),
+            Constraint::Min(10),
+            Constraint::Length(3),
+            ]
+            .as_ref()
+        )
+        .split(size);
+
+    let banner = vec![
+        Spans::from(
+            Span::raw(""),
+        ),
+        Spans::from(
+            Span::raw("    __             __      _ "),
+        ),
+        Spans::from(
+            Span::raw("   / /______ _____/ /___ _(_)"),
+        ),
+        Spans::from(
+            Span::raw("  / //_/ __ `/ __  / __ `/ / "),
+        ),
+        Spans::from(
+            Span::raw(" / ,< / /_/ / /_/ / /_/ / /  "),
+        ),
+        Spans::from(
+            Span::raw("/_/|_|\\__,_/\\__,_/\\__,_/_/   "),
+        ),
+        Spans::from(
+            Span::raw(""),
+        ),
+        Spans::from(
+            Span::raw("A Task Tracker For The Terminal"),
+        ),
+        Spans::from(
+            Span::raw(""),
+        ),
+    ];
+
+    let banner = Paragraph::new(banner)
+        .block(Block::default())
+        .style(
+            Style::default()
+            .fg(Color::Red)
+            .add_modifier(Modifier::BOLD)
+        )
+        .alignment(Alignment::Center);
+
+    frame.render_widget(banner, chunks[0]);
+
+    let list_area = centered_rect(40, 100, chunks[1]);
+    let highlight = Style::default()
+            .add_modifier(Modifier::REVERSED);
+
+    let container = CustomBorder::new()
+        .title("Projects".to_string());
+
+    frame.render_widget(container, list_area);
+
+    let list_area = shrink_rect(list_area, 1);
+
+    let items: Vec<ListItem> = app.project_list
+        .projects
+        .iter()
+        .map(|p| {
+            ListItem::new(
+                Span::raw(p)
+            )
+        })
+        .collect();
+
+    let list = List::new(items)
+        .block(Block::default())
+        .highlight_style(highlight);
+
+    frame.render_stateful_widget(list, list_area, &mut app.project_list.state);
+
+    let info = vec![
+        Spans::from(
+            Span::raw(""),
+        ),
+        Spans::from(
+            Span::raw("kadai v1.1.0 by Ben Buchanan (https://github.com/Nynergy)"),
+        ),
+    ];
+
+    let info = Paragraph::new(info)
+        .block(Block::default())
+        .alignment(Alignment::Center);
+
+    frame.render_widget(info, chunks[2]);
 }
 
 fn render_tracker<B: Backend>(

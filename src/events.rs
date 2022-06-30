@@ -15,6 +15,9 @@ pub fn handle_events(app: &mut App) -> io::Result<()> {
     if let Event::Key(key) = event::read()? {
         let state = app.state.clone();
         match state {
+            AppState::ProjectMenu => {
+                handle_project_menu_events(key, app)?;
+            },
             AppState::Tracker => {
                 handle_tracker_events(key, app, state)?;
             },
@@ -46,6 +49,45 @@ pub fn handle_events(app: &mut App) -> io::Result<()> {
                 handle_delete_list_events(key, app, *prev);
             },
         }
+    }
+
+    Ok(())
+}
+
+fn handle_project_menu_events(key: KeyEvent, app: &mut App) -> Result<(), std::io::Error> {
+    match key.code {
+        KeyCode::Char('q') => app.set_quit(true),
+        KeyCode::Esc => app.set_quit(true),
+        KeyCode::Char('n') => {
+            // TODO: Create new project
+        },
+        KeyCode::Char('d') => {
+            // TODO: Delete highlighted project
+        },
+        KeyCode::Char('e') => {
+            // TODO: Edit highlighted project name
+        },
+        KeyCode::Char('j') => app.list_down(),
+        KeyCode::Down => app.list_down(),
+        KeyCode::Char('k') => app.list_up(),
+        KeyCode::Up => app.list_up(),
+        KeyCode::Char('g') => app.jump_to_list_top(),
+        KeyCode::Home => app.jump_to_list_top(),
+        KeyCode::Char('G') => app.jump_to_list_bottom(),
+        KeyCode::End => app.jump_to_list_bottom(),
+        KeyCode::Enter => {
+            if !app.project_list.projects.is_empty() {
+                app.select_project()?;
+                app.change_state(AppState::Tracker);
+            }
+        },
+        KeyCode::Char(' ') => {
+            if !app.project_list.projects.is_empty() {
+                app.select_project()?;
+                app.change_state(AppState::Tracker);
+            }
+        },
+        _ => {}
     }
 
     Ok(())

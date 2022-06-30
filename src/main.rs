@@ -15,7 +15,7 @@ use std::{
     env,
     error::Error,
     fs,
-    io::{self, Write},
+    io,
     path::PathBuf,
     process
 };
@@ -27,7 +27,7 @@ use tui::{
 mod app;
 mod events;
 mod inputs;
-mod task_list;
+mod lists;
 mod ui;
 
 use app::*;
@@ -36,7 +36,7 @@ use ui::*;
 
 fn main() -> Result<(), Box<dyn Error>> {
     let args = get_command_line_args();
-    setup_project_path(&args)?;
+    setup_project_path()?;
 
     // Setup Terminal
     enable_raw_mode()?;
@@ -68,19 +68,18 @@ fn main() -> Result<(), Box<dyn Error>> {
 }
 
 fn get_command_line_args() -> Vec<String> {
-    let args: Vec<String> = env::args().collect();
-    if args.len() != 2 {
-        println!("USAGE: {} <project-name>", &args[0]);
-        process::exit(0);
+    let mut args: Vec<String> = env::args().collect();
+    if args.len() < 2 {
+        // If no project is given, push an empty name into args
+        args.push(String::new());
     }
 
     args
 }
 
-fn setup_project_path(args: &Vec<String>) -> Result<(), io::Error> {
+fn setup_project_path() -> Result<(), io::Error> {
     let path = get_user_home()?;
-    let path = get_kadai_directory(path)?;
-    get_project_directory(path, args)?;
+    get_kadai_directory(path)?;
 
     Ok(())
 }
@@ -105,38 +104,6 @@ fn get_kadai_directory(path: PathBuf) -> Result<PathBuf, io::Error> {
     env::set_current_dir(&path)?;
 
     Ok(path)
-}
-
-fn get_project_directory(path: PathBuf, args: &Vec<String>) -> Result<(), io::Error> {
-    let path = path.join(&args[1]);
-    if !path.exists() {
-        confirm_project_creation(&path, args)?;
-    }
-    env::set_current_dir(&path)?;
-
-    Ok(())
-}
-
-fn confirm_project_creation(path: &PathBuf, args: &Vec<String>) -> Result<(), io::Error> {
-    let mut input = String::new();
-    print!("Project '{}' does not exist. Create it? [y/N] ", &args[1]);
-    io::stdout().flush()?;
-    io::stdin().read_line(&mut input).expect("Did not enter a correct string");
-    if let Some('\n') = input.chars().next_back() {
-        input.pop();
-    }
-    if let Some('\r') = input.chars().next_back() {
-        input.pop();
-    }
-
-    if input == "y" || input == "Y" {
-        fs::create_dir(&path)?;
-    } else {
-        println!("Project not created, exiting...");
-        process::exit(0);
-    }
-
-    Ok(())
 }
 
 fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<()> {

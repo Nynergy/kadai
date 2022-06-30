@@ -1,7 +1,7 @@
 use std::{cmp, env, fs};
 
 use crate::inputs::*;
-use crate::task_list::*;
+use crate::lists::*;
 
 const TRACKER_FILE: &str = "tracker.json";
 const BACKLOG_FILE: &str = "backlog.json";
@@ -9,6 +9,7 @@ const ARCHIVE_FILE: &str = "archive.json";
 
 #[derive(Clone)]
 pub enum AppState {
+    ProjectMenu,
     Tracker,
     TaskView(Box<AppState>),
     BacklogPopup(Box<AppState>),
@@ -23,6 +24,7 @@ pub enum AppState {
 
 pub struct App {
     pub project_title: String,
+    pub project_list: ProjectList,
     pub unsaved_changes: bool,
     pub quit: bool,
     pub state: AppState,
@@ -40,18 +42,31 @@ impl App {
     pub fn create(project_title: String) -> Result<Self, std::io::Error> {
         let mut app = Self {
             project_title,
+            project_list: ProjectList::create()?,
             unsaved_changes: false,
             quit: false,
             state: AppState::Tracker,
-            task_lists: read_tracker_file()?,
+            task_lists: Vec::new(),
             active_list: 0,
-            backlog: read_backlog_file()?,
-            archive: read_archive_file()?,
+            backlog: TaskList::default(),
+            archive: TaskList::default(),
             detail_scroll: 0,
             task_detail_inputs: vec![Input::new(); 3],
             active_detail_input: 0,
             list_detail_input: Input::new(),
         };
+
+        if app.project_title == "" {
+            app.state = AppState::ProjectMenu;
+        } else {
+            let mut path = env::current_dir()?;
+            path.push(app.project_title.clone());
+            env::set_current_dir(&path)?;
+
+            app.task_lists = read_tracker_file()?;
+            app.backlog = read_backlog_file()?;
+            app.archive = read_archive_file()?;
+        }
 
         for i in 0..app.task_lists.len() {
             if !app.task_lists[i].tasks.is_empty() {
@@ -68,12 +83,36 @@ impl App {
         Ok(app)
     }
 
+    pub fn select_project(&mut self) -> Result<(), std::io::Error> {
+        if let Some(project) = self.get_highlighted_project() {
+            self.project_title = project.clone();
+
+            let mut path = env::current_dir()?;
+            path.push(project);
+            env::set_current_dir(&path)?;
+
+            self.task_lists = read_tracker_file()?;
+            self.backlog = read_backlog_file()?;
+            self.archive = read_archive_file()?;
+        }
+
+        Ok(())
+    }
+
+    pub fn get_highlighted_project(&self) -> Option<String> {
+        match self.project_list.state.selected() {
+            Some(i) => Some(self.project_list.projects[i].clone()),
+            None => None
+        }
+    }
+
     pub fn set_quit(&mut self, quit: bool) {
         self.quit = quit;
     }
 
     fn get_focused_list(&self, state: &AppState) -> &TaskList {
         match state {
+            AppState::ProjectMenu => unreachable!(),
             AppState::Tracker => &self.task_lists[self.active_list],
             AppState::BacklogPopup(_) => &self.backlog,
             AppState::ArchivePopup(_) => &self.archive,
@@ -90,6 +129,7 @@ impl App {
 
     fn get_mut_focused_list(&mut self, state: &AppState) -> &mut TaskList {
         match state {
+            AppState::ProjectMenu => unreachable!(),
             AppState::Tracker => &mut self.task_lists[self.active_list],
             AppState::BacklogPopup(_) => &mut self.backlog,
             AppState::ArchivePopup(_) => &mut self.archive,
@@ -104,38 +144,76 @@ impl App {
     }
 
     pub fn list_down(&mut self) {
-        let list = self.get_mut_focused_list(&self.state.clone());
+        match self.state {
+            AppState::ProjectMenu => {
+                if !self.project_list.projects.is_empty() {
+                    let i = match self.project_list.state.selected() {
+                        Some(i) => {
+                            if i >= self.project_list.projects.len() - 1 {
+                                0
+                            } else {
+                                i + 1
+                            }
+                        },
+                        None => 0,
+                    };
+                    self.project_list.state.select(Some(i));
+                }
+            },
+            _ => {
+                let list = self.get_mut_focused_list(&self.state.clone());
 
-        if !list.tasks.is_empty() {
-            let i = match list.state.selected() {
-                Some(i) => {
-                    if i >= list.tasks.len() - 1 {
-                        0
-                    } else {
-                        i + 1
-                    }
-                },
-                None => 0,
-            };
-            list.state.select(Some(i));
+                if !list.tasks.is_empty() {
+                    let i = match list.state.selected() {
+                        Some(i) => {
+                            if i >= list.tasks.len() - 1 {
+                                0
+                            } else {
+                                i + 1
+                            }
+                        },
+                        None => 0,
+                    };
+                    list.state.select(Some(i));
+                }
+            }
         }
     }
 
     pub fn list_up(&mut self) {
-        let list = self.get_mut_focused_list(&self.state.clone());
+        match self.state {
+            AppState::ProjectMenu => {
+                if !self.project_list.projects.is_empty() {
+                    let i = match self.project_list.state.selected() {
+                        Some(i) => {
+                            if i == 0 {
+                                self.project_list.projects.len() - 1
+                            } else {
+                                i - 1
+                            }
+                        },
+                        None => cmp::max(self.project_list.projects.len() - 1, 0),
+                    };
+                    self.project_list.state.select(Some(i));
+                }
+            },
+            _ => {
+                let list = self.get_mut_focused_list(&self.state.clone());
 
-        if !list.tasks.is_empty() {
-            let i = match list.state.selected() {
-                Some(i) => {
-                    if i == 0 {
-                        list.tasks.len() - 1
-                    } else {
-                        i - 1
-                    }
-                },
-                None => cmp::max(list.tasks.len() - 1, 0),
-            };
-            list.state.select(Some(i));
+                if !list.tasks.is_empty() {
+                    let i = match list.state.selected() {
+                        Some(i) => {
+                            if i == 0 {
+                                list.tasks.len() - 1
+                            } else {
+                                i - 1
+                            }
+                        },
+                        None => cmp::max(list.tasks.len() - 1, 0),
+                    };
+                    list.state.select(Some(i));
+                }
+            }
         }
     }
 
@@ -181,18 +259,36 @@ impl App {
     }
 
     pub fn jump_to_list_top(&mut self) {
-        let list = self.get_mut_focused_list(&self.state.clone());
+        match self.state {
+            AppState::ProjectMenu => {
+                if let Some(_) = self.project_list.state.selected() {
+                    self.project_list.state.select(Some(0));
+                }
+            },
+            _ => {
+                let list = self.get_mut_focused_list(&self.state.clone());
 
-        if let Some(_) = list.state.selected() {
-            list.state.select(Some(0));
+                if let Some(_) = list.state.selected() {
+                    list.state.select(Some(0));
+                }
+            }
         }
     }
 
     pub fn jump_to_list_bottom(&mut self) {
-        let list = self.get_mut_focused_list(&self.state.clone());
+        match self.state {
+            AppState::ProjectMenu => {
+                if let Some(_) = self.project_list.state.selected() {
+                    self.project_list.state.select(Some(self.project_list.projects.len() - 1));
+                }
+            },
+            _ => {
+                let list = self.get_mut_focused_list(&self.state.clone());
 
-        if let Some(_) = list.state.selected() {
-            list.state.select(Some(list.tasks.len() - 1));
+                if let Some(_) = list.state.selected() {
+                    list.state.select(Some(list.tasks.len() - 1));
+                }
+            }
         }
     }
 
