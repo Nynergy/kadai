@@ -16,7 +16,16 @@ pub fn handle_events(app: &mut App) -> io::Result<()> {
         let state = app.state.clone();
         match state {
             AppState::ProjectMenu => {
-                handle_project_menu_events(key, app)?;
+                handle_project_menu_events(key, app, state)?;
+            },
+            AppState::EditProject(prev) => {
+                handle_edit_project_events(key, app, *prev)?;
+            },
+            AppState::CreateProject(prev) => {
+                handle_create_project_events(key, app, *prev)?;
+            },
+            AppState::DeleteProject(prev) => {
+                handle_delete_project_events(key, app, *prev)?;
             },
             AppState::Tracker => {
                 handle_tracker_events(key, app, state)?;
@@ -54,18 +63,24 @@ pub fn handle_events(app: &mut App) -> io::Result<()> {
     Ok(())
 }
 
-fn handle_project_menu_events(key: KeyEvent, app: &mut App) -> Result<(), std::io::Error> {
+fn handle_project_menu_events(key: KeyEvent, app: &mut App, state: AppState) -> Result<(), std::io::Error> {
     match key.code {
         KeyCode::Char('q') => app.set_quit(true),
         KeyCode::Esc => app.set_quit(true),
         KeyCode::Char('n') => {
-            // TODO: Create new project
+            app.clear_project_inputs();
+            app.change_state(AppState::CreateProject(Box::new(state)));
         },
         KeyCode::Char('d') => {
-            // TODO: Delete highlighted project
+            if !app.project_list.projects.is_empty() {
+                app.change_state(AppState::DeleteProject(Box::new(state)));
+            }
         },
         KeyCode::Char('e') => {
-            // TODO: Edit highlighted project name
+            if !app.project_list.projects.is_empty() {
+                app.populate_project_detail_inputs();
+                app.change_state(AppState::EditProject(Box::new(state)));
+            }
         },
         KeyCode::Char('j') => app.list_down(),
         KeyCode::Down => app.list_down(),
@@ -87,6 +102,88 @@ fn handle_project_menu_events(key: KeyEvent, app: &mut App) -> Result<(), std::i
                 app.change_state(AppState::Tracker);
             }
         },
+        _ => {}
+    }
+
+    Ok(())
+}
+
+fn handle_edit_project_events(key: KeyEvent, app: &mut App, prev: AppState) -> Result<(), std::io::Error> {
+    match key.code {
+        KeyCode::Char(c) => app.add_to_detail_input(c),
+        KeyCode::Backspace => app.delete_from_detail_input(),
+        KeyCode::Delete => app.clear_focused_input(),
+        KeyCode::Left => {
+            match key.modifiers {
+                KeyModifiers::NONE => app.input_left(),
+                KeyModifiers::CONTROL => app.input_jump_to_space_left(),
+                _ => {}
+            }
+        },
+        KeyCode::Right => {
+            match key.modifiers {
+                KeyModifiers::NONE => app.input_right(),
+                KeyModifiers::CONTROL => app.input_jump_to_space_right(),
+                _ => {}
+            }
+        },
+        KeyCode::Home => app.input_start(),
+        KeyCode::End => app.input_end(),
+        KeyCode::Enter => {
+            app.save_to_project()?;
+            app.change_state(prev);
+        }
+        KeyCode::Esc => app.change_state(prev),
+        _ => {}
+    }
+
+    Ok(())
+}
+
+fn handle_create_project_events(key: KeyEvent, app: &mut App, prev: AppState) -> Result<(), std::io::Error> {
+    match key.code {
+        KeyCode::Char(c) => app.add_to_detail_input(c),
+        KeyCode::Backspace => app.delete_from_detail_input(),
+        KeyCode::Delete => app.clear_focused_input(),
+        KeyCode::Left => {
+            match key.modifiers {
+                KeyModifiers::NONE => app.input_left(),
+                KeyModifiers::CONTROL => app.input_jump_to_space_left(),
+                _ => {}
+            }
+        },
+        KeyCode::Right => {
+            match key.modifiers {
+                KeyModifiers::NONE => app.input_right(),
+                KeyModifiers::CONTROL => app.input_jump_to_space_right(),
+                _ => {}
+            }
+        },
+        KeyCode::Home => app.input_start(),
+        KeyCode::End => app.input_end(),
+        KeyCode::Enter => {
+            app.save_to_project()?;
+            app.change_state(prev);
+        }
+        KeyCode::Esc => app.change_state(prev),
+        _ => {}
+    }
+
+    Ok(())
+}
+
+fn handle_delete_project_events(key: KeyEvent, app: &mut App, prev: AppState) -> Result<(), std::io::Error> {
+    match key.code {
+        KeyCode::Char('y') => {
+            app.delete_focused_project()?;
+            app.change_state(prev);
+        },
+        KeyCode::Char('n') => app.change_state(prev),
+        KeyCode::Enter => {
+            app.delete_focused_project()?;
+            app.change_state(prev);
+        },
+        KeyCode::Esc => app.change_state(prev),
         _ => {}
     }
 

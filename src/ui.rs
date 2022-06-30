@@ -101,6 +101,18 @@ pub fn ui<B: Backend>(frame: &mut Frame<B>, app: &mut App, state: AppState) {
         AppState::ProjectMenu => {
             render_project_menu(frame, app);
         },
+        AppState::EditProject(prev) => {
+            ui(frame, app, *prev);
+            render_project_editor(frame, app, "Edit Project Details".to_string());
+        },
+        AppState::CreateProject(prev) => {
+            ui(frame, app, *prev);
+            render_project_editor(frame, app, "Create New Project".to_string());
+        },
+        AppState::DeleteProject(prev) => {
+            ui(frame, app, *prev);
+            render_prompt(frame, app, "Delete Highlighted Project?".to_string());
+        },
         AppState::Tracker => {
             render_tracker(frame, app);
         },
@@ -203,31 +215,61 @@ fn render_project_menu<B: Backend>(
     frame.render_widget(banner, chunks[0]);
 
     let list_area = centered_rect(40, 100, chunks[1]);
-    let highlight = Style::default()
+
+    if app.project_list.projects.is_empty() {
+        let mut commands = vec![
+            Spans::from(
+                Span::raw("There are currently no projects."),
+            ),
+            Spans::from(
+                Span::raw(""),
+            ),
+            Spans::from(
+                Span::raw("Hit 'n' to create and open a new project."),
+            ),
+        ];
+
+        for _ in 0..chunks[1].height / 2 - 2 {
+            commands.insert(0, Spans::from(Span::raw("")));
+        }
+
+        let commands = Paragraph::new(commands)
+            .block(Block::default())
+            .style(
+                Style::default()
+                .add_modifier(Modifier::BOLD)
+            )
+            .alignment(Alignment::Center)
+            .wrap(Wrap { trim: true });
+
+        frame.render_widget(commands, chunks[1]);
+    } else {
+        let highlight = Style::default()
             .add_modifier(Modifier::REVERSED);
 
-    let container = CustomBorder::new()
-        .title("Projects".to_string());
+        let container = CustomBorder::new()
+            .title("Projects".to_string());
 
-    frame.render_widget(container, list_area);
+        frame.render_widget(container, list_area);
 
-    let list_area = shrink_rect(list_area, 1);
+        let list_area = shrink_rect(list_area, 1);
 
-    let items: Vec<ListItem> = app.project_list
-        .projects
-        .iter()
-        .map(|p| {
-            ListItem::new(
-                Span::raw(p)
-            )
-        })
+        let items: Vec<ListItem> = app.project_list
+            .projects
+            .iter()
+            .map(|p| {
+                ListItem::new(
+                    Span::raw(p)
+                )
+            })
         .collect();
 
-    let list = List::new(items)
-        .block(Block::default())
-        .highlight_style(highlight);
+        let list = List::new(items)
+            .block(Block::default())
+            .highlight_style(highlight);
 
-    frame.render_stateful_widget(list, list_area, &mut app.project_list.state);
+        frame.render_stateful_widget(list, list_area, &mut app.project_list.state);
+    }
 
     let info = vec![
         Spans::from(
@@ -810,6 +852,113 @@ fn render_list_editor<B: Backend>(
 
     // Display the blinking cursor, wrapped appropriately
     let input = &app.list_detail_input;
+    let input_width = chunks[0].width as usize - 2;
+    let trailing_spaces = &input.num_trailing_spaces();
+    let strings = wrap(&input.text, input_width);
+    let string = &mut strings[strings.len() - 1].to_string();
+    for _ in 0..*trailing_spaces {
+        string.push(' ');
+    }
+
+    let mut cursor_pos = (0, 0);
+    let mut running_pos = 0;
+    for line in strings.iter() {
+        let new_len = line.len() + running_pos + trailing_spaces;
+        if new_len < input.pos {
+            running_pos += line.len();
+            if line.len() < input_width {
+                running_pos += 1;
+            }
+            cursor_pos.1 += 1;
+        } else {
+            cursor_pos.0 = input.pos - running_pos;
+            break;
+        }
+    }
+
+    frame.set_cursor(
+        chunks[0].x + cursor_pos.0 as u16 + 1,
+        chunks[0].y + cursor_pos.1 as u16 + 1
+    );
+
+    let info = Paragraph::new(
+        Span::styled(
+            "Press Enter to Save Changes, Esc to Exit",
+            Style::default()
+            .fg(Color::Red)
+            .add_modifier(Modifier::BOLD)
+        ))
+        .block(Block::default())
+        .wrap(Wrap { trim: true })
+        .alignment(Alignment::Center);
+
+    frame.render_widget(info, chunks[1]);
+
+    let info = Paragraph::new(
+        Span::styled(
+            "Press Delete to Clear Input",
+            Style::default()
+            .fg(Color::Red)
+            .add_modifier(Modifier::BOLD)
+        ))
+        .block(Block::default())
+        .wrap(Wrap { trim: true })
+        .alignment(Alignment::Center);
+
+    frame.render_widget(info, chunks[2]);
+}
+
+fn render_project_editor<B: Backend>(
+    frame: &mut Frame<B>,
+    app: &mut App,
+    editor_title: String,
+) {
+    let size = frame.size();
+    let area = centered_fixed_size_rect((size.width as f32 * 0.6) as usize, 7, size);
+    let area_block = Block::default()
+        .title(
+            Span::styled(
+                editor_title,
+                Style::default()
+                .add_modifier(Modifier::BOLD)
+            )
+        )
+        .title_alignment(Alignment::Center)
+        .borders(Borders::ALL)
+        .border_type(BorderType::Double);
+
+    frame.render_widget(Clear, area); // Clear the area first
+    frame.render_widget(area_block, area);
+
+    let inner_area = shrink_rect(area, 1);
+
+    let chunks = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints(
+            [
+            Constraint::Length(3),
+            Constraint::Length(1),
+            Constraint::Length(1),
+            ]
+            .as_ref()
+        )
+        .split(inner_area);
+
+    let name = Paragraph::new(app.project_detail_input.clone())
+        .style(
+            Style::default().fg(Color::Red)
+        )
+        .block(
+            Block::default()
+            .borders(Borders::ALL)
+            .title("Project Name")
+        )
+        .wrap(Wrap { trim: true });
+
+    frame.render_widget(name, chunks[0]);
+
+    // Display the blinking cursor, wrapped appropriately
+    let input = &app.project_detail_input;
     let input_width = chunks[0].width as usize - 2;
     let trailing_spaces = &input.num_trailing_spaces();
     let strings = wrap(&input.text, input_width);

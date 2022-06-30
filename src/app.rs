@@ -10,6 +10,9 @@ const ARCHIVE_FILE: &str = "archive.json";
 #[derive(Clone)]
 pub enum AppState {
     ProjectMenu,
+    EditProject(Box<AppState>),
+    CreateProject(Box<AppState>),
+    DeleteProject(Box<AppState>),
     Tracker,
     TaskView(Box<AppState>),
     BacklogPopup(Box<AppState>),
@@ -25,6 +28,7 @@ pub enum AppState {
 pub struct App {
     pub project_title: String,
     pub project_list: ProjectList,
+    pub project_detail_input: Input,
     pub unsaved_changes: bool,
     pub quit: bool,
     pub state: AppState,
@@ -43,6 +47,7 @@ impl App {
         let mut app = Self {
             project_title,
             project_list: ProjectList::create()?,
+            project_detail_input: Input::new(),
             unsaved_changes: false,
             quit: false,
             state: AppState::Tracker,
@@ -94,6 +99,18 @@ impl App {
             self.task_lists = read_tracker_file()?;
             self.backlog = read_backlog_file()?;
             self.archive = read_archive_file()?;
+
+            for i in 0..self.task_lists.len() {
+                if !self.task_lists[i].tasks.is_empty() {
+                    self.task_lists[i].state.select(Some(0));
+                }
+            }
+            if !self.backlog.tasks.is_empty() {
+                self.backlog.state.select(Some(0));
+            }
+            if !self.archive.tasks.is_empty() {
+                self.archive.state.select(Some(0));
+            }
         }
 
         Ok(())
@@ -113,6 +130,9 @@ impl App {
     fn get_focused_list(&self, state: &AppState) -> &TaskList {
         match state {
             AppState::ProjectMenu => unreachable!(),
+            AppState::EditProject(_) => unreachable!(),
+            AppState::CreateProject(_) => unreachable!(),
+            AppState::DeleteProject(_) => unreachable!(),
             AppState::Tracker => &self.task_lists[self.active_list],
             AppState::BacklogPopup(_) => &self.backlog,
             AppState::ArchivePopup(_) => &self.archive,
@@ -130,6 +150,9 @@ impl App {
     fn get_mut_focused_list(&mut self, state: &AppState) -> &mut TaskList {
         match state {
             AppState::ProjectMenu => unreachable!(),
+            AppState::EditProject(_) => unreachable!(),
+            AppState::CreateProject(_) => unreachable!(),
+            AppState::DeleteProject(_) => unreachable!(),
             AppState::Tracker => &mut self.task_lists[self.active_list],
             AppState::BacklogPopup(_) => &mut self.backlog,
             AppState::ArchivePopup(_) => &mut self.archive,
@@ -477,10 +500,13 @@ impl App {
     }
 
     pub fn save_changes(&mut self) -> Result<(), std::io::Error> {
-        save_tracker_file(&self.task_lists)?;
-        save_backlog_file(&self.backlog)?;
-        save_archive_file(&self.archive)?;
-        self.unsaved_changes = false;
+        if self.project_title != "" {
+            save_tracker_file(&self.task_lists)?;
+            save_backlog_file(&self.backlog)?;
+            save_archive_file(&self.archive)?;
+            self.unsaved_changes = false;
+        }
+
         Ok(())
     }
 
@@ -504,39 +530,31 @@ impl App {
     }
 
     pub fn add_to_detail_input(&mut self, c: char) {
-        match self.state {
-            AppState::EditTask(_) => {
-                self.task_detail_inputs[self.active_detail_input].push(c);
-            },
-            AppState::CreateTask(_) => {
-                self.task_detail_inputs[self.active_detail_input].push(c);
-            },
-            AppState::EditList(_) => {
-                self.list_detail_input.push(c);
-            },
-            AppState::CreateList(_) => {
-                self.list_detail_input.push(c);
-            },
-            _ => {}
-        }
+        let input = match self.state {
+            AppState::EditProject(_) => &mut self.project_detail_input,
+            AppState::CreateProject(_) => &mut self.project_detail_input,
+            AppState::EditTask(_) => &mut self.task_detail_inputs[self.active_detail_input],
+            AppState::CreateTask(_) => &mut self.task_detail_inputs[self.active_detail_input],
+            AppState::EditList(_) => &mut self.list_detail_input,
+            AppState::CreateList(_) => &mut self.list_detail_input,
+            _ => unreachable!()
+        };
+
+        input.push(c);
     }
 
     pub fn delete_from_detail_input(&mut self) {
-        match self.state {
-            AppState::EditTask(_) => {
-                self.task_detail_inputs[self.active_detail_input].pop();
-            },
-            AppState::CreateTask(_) => {
-                self.task_detail_inputs[self.active_detail_input].pop();
-            },
-            AppState::EditList(_) => {
-                self.list_detail_input.pop();
-            },
-            AppState::CreateList(_) => {
-                self.list_detail_input.pop();
-            },
-            _ => {}
-        }
+        let input = match self.state {
+            AppState::EditProject(_) => &mut self.project_detail_input,
+            AppState::CreateProject(_) => &mut self.project_detail_input,
+            AppState::EditTask(_) => &mut self.task_detail_inputs[self.active_detail_input],
+            AppState::CreateTask(_) => &mut self.task_detail_inputs[self.active_detail_input],
+            AppState::EditList(_) => &mut self.list_detail_input,
+            AppState::CreateList(_) => &mut self.list_detail_input,
+            _ => unreachable!()
+        };
+
+        input.pop();
     }
 
     pub fn next_detail_input(&mut self) {
@@ -621,21 +639,17 @@ impl App {
     }
 
     pub fn clear_focused_input(&mut self) {
-        match self.state {
-            AppState::EditTask(_) => {
-                self.task_detail_inputs[self.active_detail_input].clear();
-            },
-            AppState::CreateTask(_) => {
-                self.task_detail_inputs[self.active_detail_input].clear();
-            },
-            AppState::EditList(_) => {
-                self.list_detail_input.clear();
-            },
-            AppState::CreateList(_) => {
-                self.list_detail_input.clear();
-            },
-            _ => {}
-        }
+        let input = match self.state {
+            AppState::EditProject(_) => &mut self.project_detail_input,
+            AppState::CreateProject(_) => &mut self.project_detail_input,
+            AppState::EditTask(_) => &mut self.task_detail_inputs[self.active_detail_input],
+            AppState::CreateTask(_) => &mut self.task_detail_inputs[self.active_detail_input],
+            AppState::EditList(_) => &mut self.list_detail_input,
+            AppState::CreateList(_) => &mut self.list_detail_input,
+            _ => unreachable!()
+        };
+
+        input.clear();
     }
 
     pub fn populate_list_detail_inputs(&mut self) {
@@ -722,110 +736,146 @@ impl App {
     }
 
     pub fn input_left(&mut self) {
-        match self.state {
-            AppState::EditTask(_) => {
-                self.task_detail_inputs[self.active_detail_input].move_left();
-            },
-            AppState::CreateTask(_) => {
-                self.task_detail_inputs[self.active_detail_input].move_left();
-            },
-            AppState::EditList(_) => {
-                self.list_detail_input.move_left();
-            },
-            AppState::CreateList(_) => {
-                self.list_detail_input.move_left();
-            },
-            _ => {}
-        }
+        let input = match self.state {
+            AppState::EditProject(_) => &mut self.project_detail_input,
+            AppState::CreateProject(_) => &mut self.project_detail_input,
+            AppState::EditTask(_) => &mut self.task_detail_inputs[self.active_detail_input],
+            AppState::CreateTask(_) => &mut self.task_detail_inputs[self.active_detail_input],
+            AppState::EditList(_) => &mut self.list_detail_input,
+            AppState::CreateList(_) => &mut self.list_detail_input,
+            _ => unreachable!()
+        };
+
+        input.move_left();
     }
 
     pub fn input_right(&mut self) {
-        match self.state {
-            AppState::EditTask(_) => {
-                self.task_detail_inputs[self.active_detail_input].move_right();
-            },
-            AppState::CreateTask(_) => {
-                self.task_detail_inputs[self.active_detail_input].move_right();
-            },
-            AppState::EditList(_) => {
-                self.list_detail_input.move_right();
-            },
-            AppState::CreateList(_) => {
-                self.list_detail_input.move_right();
-            },
-            _ => {}
-        }
+        let input = match self.state {
+            AppState::EditProject(_) => &mut self.project_detail_input,
+            AppState::CreateProject(_) => &mut self.project_detail_input,
+            AppState::EditTask(_) => &mut self.task_detail_inputs[self.active_detail_input],
+            AppState::CreateTask(_) => &mut self.task_detail_inputs[self.active_detail_input],
+            AppState::EditList(_) => &mut self.list_detail_input,
+            AppState::CreateList(_) => &mut self.list_detail_input,
+            _ => unreachable!()
+        };
+
+        input.move_right();
     }
 
     pub fn input_start(&mut self) {
-        match self.state {
-            AppState::EditTask(_) => {
-                self.task_detail_inputs[self.active_detail_input].move_start();
-            },
-            AppState::CreateTask(_) => {
-                self.task_detail_inputs[self.active_detail_input].move_start();
-            },
-            AppState::EditList(_) => {
-                self.list_detail_input.move_start();
-            },
-            AppState::CreateList(_) => {
-                self.list_detail_input.move_start();
-            },
-            _ => {}
-        }
+        let input = match self.state {
+            AppState::EditProject(_) => &mut self.project_detail_input,
+            AppState::CreateProject(_) => &mut self.project_detail_input,
+            AppState::EditTask(_) => &mut self.task_detail_inputs[self.active_detail_input],
+            AppState::CreateTask(_) => &mut self.task_detail_inputs[self.active_detail_input],
+            AppState::EditList(_) => &mut self.list_detail_input,
+            AppState::CreateList(_) => &mut self.list_detail_input,
+            _ => unreachable!()
+        };
+
+        input.move_start();
     }
 
     pub fn input_end(&mut self) {
-        match self.state {
-            AppState::EditTask(_) => {
-                self.task_detail_inputs[self.active_detail_input].move_end();
-            },
-            AppState::CreateTask(_) => {
-                self.task_detail_inputs[self.active_detail_input].move_end();
-            },
-            AppState::EditList(_) => {
-                self.list_detail_input.move_end();
-            },
-            AppState::CreateList(_) => {
-                self.list_detail_input.move_end();
-            },
-            _ => {}
-        }
+        let input = match self.state {
+            AppState::EditProject(_) => &mut self.project_detail_input,
+            AppState::CreateProject(_) => &mut self.project_detail_input,
+            AppState::EditTask(_) => &mut self.task_detail_inputs[self.active_detail_input],
+            AppState::CreateTask(_) => &mut self.task_detail_inputs[self.active_detail_input],
+            AppState::EditList(_) => &mut self.list_detail_input,
+            AppState::CreateList(_) => &mut self.list_detail_input,
+            _ => unreachable!()
+        };
+
+        input.move_end();
     }
 
     pub fn input_jump_to_space_left(&mut self) {
-        match self.state {
-            AppState::EditTask(_) => {
-                self.task_detail_inputs[self.active_detail_input].move_to_prev_space();
-            },
-            AppState::CreateTask(_) => {
-                self.task_detail_inputs[self.active_detail_input].move_to_prev_space();
-            },
-            AppState::EditList(_) => {
-                self.list_detail_input.move_to_prev_space();
-            },
-            AppState::CreateList(_) => {
-                self.list_detail_input.move_to_prev_space();
-            },
-            _ => {}
-        }
+        let input = match self.state {
+            AppState::EditProject(_) => &mut self.project_detail_input,
+            AppState::CreateProject(_) => &mut self.project_detail_input,
+            AppState::EditTask(_) => &mut self.task_detail_inputs[self.active_detail_input],
+            AppState::CreateTask(_) => &mut self.task_detail_inputs[self.active_detail_input],
+            AppState::EditList(_) => &mut self.list_detail_input,
+            AppState::CreateList(_) => &mut self.list_detail_input,
+            _ => unreachable!()
+        };
+
+        input.move_to_prev_space();
     }
 
     pub fn input_jump_to_space_right(&mut self) {
-        match self.state {
-            AppState::EditTask(_) => {
-                self.task_detail_inputs[self.active_detail_input].move_to_next_space();
+        let input = match self.state {
+            AppState::EditProject(_) => &mut self.project_detail_input,
+            AppState::CreateProject(_) => &mut self.project_detail_input,
+            AppState::EditTask(_) => &mut self.task_detail_inputs[self.active_detail_input],
+            AppState::CreateTask(_) => &mut self.task_detail_inputs[self.active_detail_input],
+            AppState::EditList(_) => &mut self.list_detail_input,
+            AppState::CreateList(_) => &mut self.list_detail_input,
+            _ => unreachable!()
+        };
+
+        input.move_to_next_space();
+    }
+
+    pub fn clear_project_inputs(&mut self) {
+        self.project_detail_input.clear();
+    }
+
+    pub fn save_to_project(&mut self) -> Result<(), std::io::Error> {
+        let name = self.project_detail_input.extract();
+
+        match &self.state {
+            AppState::EditProject(_prev) => {
+                if let Some(i) = self.project_list.state.selected() {
+                    let old_name = self.project_list.projects.remove(i);
+                    self.project_list.projects.insert(i, name.clone());
+
+                    let mut old_path = env::current_dir()?;
+                    old_path.push(old_name.clone());
+                    let mut new_path = env::current_dir()?;
+                    new_path.push(name.clone());
+                    fs::rename(&old_path, &new_path)?;
+                }
             },
-            AppState::CreateTask(_) => {
-                self.task_detail_inputs[self.active_detail_input].move_to_next_space();
+            AppState::CreateProject(_prev) => {
+                self.project_list.projects.push(name.clone());
+                if self.project_list.projects.len() == 1 {
+                    self.project_list.state.select(Some(0));
+                }
+
+                let mut path = env::current_dir()?;
+                path.push(name.clone());
+                fs::create_dir(&path)?;
             },
-            AppState::EditList(_) => {
-                self.list_detail_input.move_to_next_space();
-            },
-            AppState::CreateList(_) => {
-                self.list_detail_input.move_to_next_space();
-            },
-            _ => {}
+            _ => unreachable!()
+        }
+
+        Ok(())
+    }
+
+    pub fn delete_focused_project(&mut self) -> Result<(), std::io::Error> {
+        if let Some(i) = self.project_list.state.selected() {
+            let project = self.project_list.projects.remove(i);
+            let mut path = env::current_dir()?;
+            path.push(project.clone());
+            fs::remove_dir_all(&path)?;
+
+            if self.project_list.projects.is_empty() {
+                self.project_list.state.select(None);
+            } else if i >= self.project_list.projects.len() {
+                self.project_list.state.select(Some(i - 1));
+            }
+        }
+
+        Ok(())
+    }
+
+    pub fn populate_project_detail_inputs(&mut self) {
+        if let Some(i) = self.project_list.state.selected() {
+            let project = &self.project_list.projects[i];
+            self.project_detail_input = Input::from(project.clone());
         }
     }
 }
