@@ -88,9 +88,9 @@ Key | Action
 <kbd>e</kbd> and <kbd>E</kbd> | edit task/list
 <kbd>d</kbd> and <kbd>D</kbd> | delete focused task/list
 <kbd>j</kbd> and <kbd>k</kbd> / <kbd>Up</kbd> and <kbd>Down</kbd> | change task focus up and down
-<kbd>J</kbd> and <kbd>K</kbd> / <kbd>Ctrl + Up</kbd> and <kbd>Ctrl + Down</kbd> | move task up and down
+<kbd>J</kbd> and <kbd>K</kbd> / <kbd>Ctrl</kbd> + <kbd>Up</kbd> and <kbd>Ctrl</kbd> + <kbd>Down</kbd> | move task up and down
 <kbd>h</kbd> and <kbd>l</kbd> / <kbd>Left</kbd> and <kbd>Right</kbd> | change list focus left and right
-<kbd>H</kbd> and <kbd>L</kbd> / <kbd>Ctrl + Left</kbd> and <kbd>Ctrl + Right</kbd>| move list left and right
+<kbd>H</kbd> and <kbd>L</kbd> / <kbd>Ctrl</kbd> + <kbd>Left</kbd> and <kbd>Ctrl</kbd> + <kbd>Right</kbd>| move list left and right
 <kbd>g</kbd> and <kbd>G</kbd> / <kbd>Home</kbd> and <kbd>End</kbd>| jump to top or bottom of list
 <kbd>c</kbd> and <kbd>C</kbd> | cycle focused list color
 <kbd>Space</kbd> and <kbd>Backspace</kbd> | move focused task to next/previous list
@@ -119,7 +119,7 @@ Key | Action
 <kbd>e</kbd> | edit task
 <kbd>d</kbd> | delete focused task
 <kbd>j</kbd> and <kbd>k</kbd> / <kbd>Up</kbd> and <kbd>Down</kbd> | change task focus up and down
-<kbd>J</kbd> and <kbd>K</kbd> / <kbd>Ctrl + Up</kbd> and <kbd>Ctrl + Down</kbd> | move task up and down
+<kbd>J</kbd> and <kbd>K</kbd> / <kbd>Ctrl</kbd> + <kbd>Up</kbd> and <kbd>Ctrl</kbd> + <kbd>Down</kbd> | move task up and down
 <kbd>g</kbd> and <kbd>G</kbd> / <kbd>Home</kbd> and <kbd>End</kbd>| jump to top or bottom of list
 <kbd>c</kbd> and <kbd>C</kbd> | cycle backlog list color
 <kbd>Space</kbd> | move focused task to first list
@@ -135,7 +135,7 @@ Key | Action
 <kbd>s</kbd> | save without exiting
 <kbd>d</kbd> | delete focused task
 <kbd>j</kbd> and <kbd>k</kbd> / <kbd>Up</kbd> and <kbd>Down</kbd> | change task focus up and down
-<kbd>J</kbd> and <kbd>K</kbd> / <kbd>Ctrl + Up</kbd> and <kbd>Ctrl + Down</kbd> | move task up and down
+<kbd>J</kbd> and <kbd>K</kbd> / <kbd>Ctrl</kbd> + <kbd>Up</kbd> and <kbd>Ctrl</kbd> + <kbd>Down</kbd> | move task up and down
 <kbd>g</kbd> and <kbd>G</kbd> / <kbd>Home</kbd> and <kbd>End</kbd>| jump to top or bottom of list
 <kbd>c</kbd> and <kbd>C</kbd> | cycle backlog list color
 <kbd>Space</kbd> | move focused task to last list
@@ -151,9 +151,9 @@ Key | Action
 <kbd>Backspace</kbd> | delete character from focused input
 <kbd>Delete</kbd> | clear focused input
 <kbd>Left</kbd> and <kbd>Right</kbd> | move cursor position left and right
-<kbd>Ctrl + Left</kbd> and <kbd>Ctrl + Right</kbd> | move cursor left and right to nearest space
+<kbd>Ctrl</kbd> + <kbd>Left</kbd> and <kbd>Ctrl</kbd> + <kbd>Right</kbd> | move cursor left and right to nearest space
 <kbd>Home</kbd> and <kbd>End</kbd> | move cursor to beginning and end of input
-<kbd>Tab</kbd> and <kbd>Shift + Tab</kbd> / <kbd>Up</kbd> and <kbd>Down</kbd> | cycle focused input
+<kbd>Tab</kbd> and <kbd>Shift</kbd> + <kbd>Tab</kbd> / <kbd>Up</kbd> and <kbd>Down</kbd> | cycle focused input
 <kbd>Enter</kbd> | save task details and close editor
 <kbd>Esc</kbd> | close editor
 
@@ -165,7 +165,7 @@ Key | Action
 <kbd>Backspace</kbd> | delete character from focused input
 <kbd>Delete</kbd> | clear focused input
 <kbd>Left</kbd> and <kbd>Right</kbd> | move cursor position left and right
-<kbd>Ctrl + Left</kbd> and <kbd>Ctrl + Right</kbd> | move cursor left and right to nearest space
+<kbd>Ctrl</kbd> + <kbd>Left</kbd> and <kbd>Ctrl</kbd> + <kbd>Right</kbd> | move cursor left and right to nearest space
 <kbd>Home</kbd> and <kbd>End</kbd> | move cursor to beginning and end of input
 <kbd>Enter</kbd> | save list details and close editor
 <kbd>Esc</kbd> | close editor
