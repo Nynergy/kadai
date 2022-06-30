@@ -29,10 +29,15 @@ in the user's `~/.kadai` directory if it doesn't already exist. Within each
 project directory there are three files: `tracker.json`, `backlog.json`, and
 `archive.json`, which is what _kadai_ uses to read and store task data.
 
-The main app interface shows you a horizontal series of user-created lists, and
-each list is a vertical column of user-created tasks. Tasks can have a summary,
-a description, and a category. You can view and edit task data in the tracker,
-as well as edit list titles and colors.
+Invoking _kadai_ without specifying a project name will show you the project
+selection menu, where you can open an existing project, create a new one, edit
+one, or delete one. Once selected, a project will open in the main interface, or
+"tracker".
+
+The tracker shows you a horizontal series of user-created lists, and each list
+is a vertical column of user-created tasks. Tasks can have a summary, a
+description, and a category. You can view and edit task data in the tracker, as
+well as edit list titles and colors.
 
 Add new tasks, move them between different lists like stages or states of
 progress, and edit their data as you go if need be. There is also a backlog list
@@ -78,6 +83,31 @@ installed, you can run the app by simply running `kadai <project-name>`.
 
 Keybindings for the various interfaces are the following:
 
+#### Project Select Menu
+
+Key | Action
+----|-------
+<kbd>q</kbd> / <kbd>Esc</kbd> | quit kadai
+<kbd>n</kbd> | create new project
+<kbd>e</kbd> | edit project
+<kbd>d</kbd> | delete focused project
+<kbd>j</kbd> and <kbd>k</kbd> / <kbd>Up</kbd> and <kbd>Down</kbd> | change project focus up and down
+<kbd>g</kbd> and <kbd>G</kbd> / <kbd>Home</kbd> and <kbd>End</kbd>| jump to top or bottom of list
+<kbd>Space</kbd> / <kbd>Enter</kbd> | select project to open
+
+#### Edit/Create Project
+
+Key | Action
+----|-------
+<kbd>Char</kbd> | enter character into focused input
+<kbd>Backspace</kbd> | delete character from focused input
+<kbd>Delete</kbd> | clear focused input
+<kbd>Left</kbd> and <kbd>Right</kbd> | move cursor position left and right
+<kbd>Ctrl</kbd> + <kbd>Left</kbd> and <kbd>Ctrl</kbd> + <kbd>Right</kbd> | move cursor left and right to nearest space
+<kbd>Home</kbd> and <kbd>End</kbd> | move cursor to beginning and end of input
+<kbd>Enter</kbd> | save project details and close editor
+<kbd>Esc</kbd> | close editor
+
 #### Tracker
 
 Key | Action
@@ -113,7 +143,7 @@ Key | Action
 
 Key | Action
 ----|-------
-<kbd>q</kbd> / <kbd>Esc</kbd> | save and quit kadai
+<kbd>q</kbd> | save and quit kadai
 <kbd>s</kbd> | save without exiting
 <kbd>n</kbd> | add new task
 <kbd>e</kbd> | edit task
