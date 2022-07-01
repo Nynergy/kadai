@@ -826,6 +826,10 @@ impl App {
     pub fn save_to_project(&mut self) -> Result<(), std::io::Error> {
         let name = self.project_detail_input.extract();
 
+        if name == "" {
+            return Ok(());
+        }
+
         match &self.state {
             AppState::EditProject(_prev) => {
                 if let Some(i) = self.project_list.state.selected() {
