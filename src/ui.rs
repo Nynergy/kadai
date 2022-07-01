@@ -98,9 +98,7 @@ impl Widget for CustomBorder {
 
 pub fn ui<B: Backend>(frame: &mut Frame<B>, app: &mut App, state: AppState) {
     match state {
-        AppState::ProjectMenu => {
-            render_project_menu(frame, app);
-        },
+        AppState::ProjectMenu => render_project_menu(frame, app),
         AppState::EditProject(prev) => {
             ui(frame, app, *prev);
             render_project_editor(frame, app, "Edit Project Details".to_string());
@@ -113,9 +111,7 @@ pub fn ui<B: Backend>(frame: &mut Frame<B>, app: &mut App, state: AppState) {
             ui(frame, app, *prev);
             render_prompt(frame, app, "Delete Highlighted Project?".to_string());
         },
-        AppState::Tracker => {
-            render_tracker(frame, app);
-        },
+        AppState::Tracker => render_tracker(frame, app),
         AppState::TaskView(prev) => {
             ui(frame, app, *prev);
             render_task_data(frame, app);
@@ -388,6 +384,17 @@ fn render_info_bar<B: Backend>(
             " Backlogged",
             Style::default()
             .fg(Color::Indexed(app.backlog.color_index))
+            .add_modifier(Modifier::BOLD)
+        ),
+        Span::raw(" | "),
+        Span::styled(
+            app.num_tracked_tasks().to_string(),
+            Style::default()
+            .add_modifier(Modifier::BOLD)
+        ),
+        Span::styled(
+            " Tracked",
+            Style::default()
             .add_modifier(Modifier::BOLD)
         ),
         Span::raw(" | "),

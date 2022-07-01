@@ -29,16 +29,22 @@ pub struct App {
     pub project_title: String,
     pub project_list: ProjectList,
     pub project_detail_input: Input,
+
     pub unsaved_changes: bool,
     pub quit: bool,
     pub state: AppState,
+
     pub task_lists: Vec<TaskList>,
     pub active_list: usize,
+
     pub backlog: TaskList,
     pub archive: TaskList,
+
     pub detail_scroll: u16,
+
     pub task_detail_inputs: Vec<Input>,
     pub active_detail_input: usize,
+
     pub list_detail_input: Input,
 }
 
@@ -48,16 +54,22 @@ impl App {
             project_title,
             project_list: ProjectList::create()?,
             project_detail_input: Input::new(),
+
             unsaved_changes: false,
             quit: false,
             state: AppState::Tracker,
+
             task_lists: Vec::new(),
             active_list: 0,
+
             backlog: TaskList::default(),
             archive: TaskList::default(),
+
             detail_scroll: 0,
+
             task_detail_inputs: vec![Input::new(); 3],
             active_detail_input: 0,
+
             list_detail_input: Input::new(),
         };
 
@@ -127,12 +139,17 @@ impl App {
         self.quit = quit;
     }
 
+    pub fn num_tracked_tasks(&self) -> usize {
+        let sum: usize = self.task_lists
+            .iter()
+            .map(|list| list.tasks.len())
+            .sum();
+
+        sum
+    }
+
     fn get_focused_list(&self, state: &AppState) -> &TaskList {
         match state {
-            AppState::ProjectMenu => unreachable!(),
-            AppState::EditProject(_) => unreachable!(),
-            AppState::CreateProject(_) => unreachable!(),
-            AppState::DeleteProject(_) => unreachable!(),
             AppState::Tracker => &self.task_lists[self.active_list],
             AppState::BacklogPopup(_) => &self.backlog,
             AppState::ArchivePopup(_) => &self.archive,
@@ -143,16 +160,13 @@ impl App {
             AppState::EditList(prev) => self.get_focused_list(&*prev),
             AppState::CreateList(prev) => self.get_focused_list(&*prev),
             AppState::DeleteList(prev) => self.get_focused_list(&*prev),
+            _ => unreachable!()
         }
     }
 
 
     fn get_mut_focused_list(&mut self, state: &AppState) -> &mut TaskList {
         match state {
-            AppState::ProjectMenu => unreachable!(),
-            AppState::EditProject(_) => unreachable!(),
-            AppState::CreateProject(_) => unreachable!(),
-            AppState::DeleteProject(_) => unreachable!(),
             AppState::Tracker => &mut self.task_lists[self.active_list],
             AppState::BacklogPopup(_) => &mut self.backlog,
             AppState::ArchivePopup(_) => &mut self.archive,
@@ -163,6 +177,7 @@ impl App {
             AppState::EditList(prev) => self.get_mut_focused_list(&*prev),
             AppState::CreateList(prev) => self.get_mut_focused_list(&*prev),
             AppState::DeleteList(prev) => self.get_mut_focused_list(&*prev),
+            _ => unreachable!()
         }
     }
 

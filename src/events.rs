@@ -15,71 +15,59 @@ pub fn handle_events(app: &mut App) -> io::Result<()> {
     if let Event::Key(key) = event::read()? {
         let state = app.state.clone();
         match state {
-            AppState::ProjectMenu => {
-                handle_project_menu_events(key, app, state)?;
-            },
-            AppState::EditProject(prev) => {
-                handle_edit_project_events(key, app, *prev)?;
-            },
-            AppState::CreateProject(prev) => {
-                handle_create_project_events(key, app, *prev)?;
-            },
-            AppState::DeleteProject(prev) => {
-                handle_delete_project_events(key, app, *prev)?;
-            },
-            AppState::Tracker => {
-                handle_tracker_events(key, app, state)?;
-            },
-            AppState::TaskView(prev) => {
-                handle_task_view_events(key, app, *prev)?;
-            },
-            AppState::BacklogPopup(prev) => {
-                handle_backlog_popup_events(key, app, *prev)?;
-            },
-            AppState::ArchivePopup(prev) => {
-                handle_archive_popup_events(key, app, *prev)?;
-            },
-            AppState::EditTask(prev) => {
-                handle_edit_task_events(key, app, *prev);
-            },
-            AppState::CreateTask(prev) => {
-                handle_create_task_events(key, app, *prev);
-            },
-            AppState::DeleteTask(prev) => {
-                handle_delete_task_events(key, app, *prev);
-            },
-            AppState::EditList(prev) => {
-                handle_edit_list_events(key, app, *prev);
-            },
-            AppState::CreateList(prev) => {
-                handle_create_list_events(key, app, *prev);
-            },
-            AppState::DeleteList(prev) => {
-                handle_delete_list_events(key, app, *prev);
-            },
+            AppState::ProjectMenu => handle_project_menu_events(key, app, state)?,
+            AppState::EditProject(prev) => handle_edit_project_events(key, app, *prev)?,
+            AppState::CreateProject(prev) => handle_create_project_events(key, app, *prev)?,
+            AppState::DeleteProject(prev) => handle_delete_project_events(key, app, *prev)?,
+            AppState::Tracker => handle_tracker_events(key, app, state)?,
+            AppState::TaskView(prev) => handle_task_view_events(key, app, *prev)?,
+            AppState::BacklogPopup(prev) => handle_backlog_popup_events(key, app, *prev)?,
+            AppState::ArchivePopup(prev) => handle_archive_popup_events(key, app, *prev)?,
+            AppState::EditTask(prev) => handle_edit_task_events(key, app, *prev),
+            AppState::CreateTask(prev) => handle_create_task_events(key, app, *prev),
+            AppState::DeleteTask(prev) => handle_delete_task_events(key, app, *prev),
+            AppState::EditList(prev) => handle_edit_list_events(key, app, *prev),
+            AppState::CreateList(prev) => handle_create_list_events(key, app, *prev),
+            AppState::DeleteList(prev) => handle_delete_list_events(key, app, *prev),
         }
     }
 
     Ok(())
 }
 
-fn handle_project_menu_events(key: KeyEvent, app: &mut App, state: AppState) -> Result<(), std::io::Error> {
+fn handle_project_menu_events(
+    key: KeyEvent,
+    app: &mut App,
+    state: AppState
+) -> Result<(), io::Error> {
     match key.code {
         KeyCode::Char('q') => app.set_quit(true),
         KeyCode::Esc => app.set_quit(true),
         KeyCode::Char('n') => {
             app.clear_project_inputs();
-            app.change_state(AppState::CreateProject(Box::new(state)));
+            app.change_state(
+                AppState::CreateProject(
+                    Box::new(state)
+                )
+            );
         },
         KeyCode::Char('d') => {
             if !app.project_list.projects.is_empty() {
-                app.change_state(AppState::DeleteProject(Box::new(state)));
+                app.change_state(
+                    AppState::DeleteProject(
+                        Box::new(state)
+                    )
+                );
             }
         },
         KeyCode::Char('e') => {
             if !app.project_list.projects.is_empty() {
                 app.populate_project_detail_inputs();
-                app.change_state(AppState::EditProject(Box::new(state)));
+                app.change_state(
+                    AppState::EditProject(
+                        Box::new(state)
+                    )
+                );
             }
         },
         KeyCode::Char('j') => app.list_down(),
@@ -108,7 +96,11 @@ fn handle_project_menu_events(key: KeyEvent, app: &mut App, state: AppState) -> 
     Ok(())
 }
 
-fn handle_edit_project_events(key: KeyEvent, app: &mut App, prev: AppState) -> Result<(), std::io::Error> {
+fn handle_edit_project_events(
+    key: KeyEvent,
+    app: &mut App,
+    prev: AppState
+) -> Result<(), io::Error> {
     match key.code {
         KeyCode::Char(c) => app.add_to_detail_input(c),
         KeyCode::Backspace => app.delete_from_detail_input(),
@@ -140,7 +132,11 @@ fn handle_edit_project_events(key: KeyEvent, app: &mut App, prev: AppState) -> R
     Ok(())
 }
 
-fn handle_create_project_events(key: KeyEvent, app: &mut App, prev: AppState) -> Result<(), std::io::Error> {
+fn handle_create_project_events(
+    key: KeyEvent,
+    app: &mut App,
+    prev: AppState
+) -> Result<(), io::Error> {
     match key.code {
         KeyCode::Char(c) => app.add_to_detail_input(c),
         KeyCode::Backspace => app.delete_from_detail_input(),
@@ -172,7 +168,11 @@ fn handle_create_project_events(key: KeyEvent, app: &mut App, prev: AppState) ->
     Ok(())
 }
 
-fn handle_delete_project_events(key: KeyEvent, app: &mut App, prev: AppState) -> Result<(), std::io::Error> {
+fn handle_delete_project_events(
+    key: KeyEvent,
+    app: &mut App,
+    prev: AppState
+) -> Result<(), io::Error> {
     match key.code {
         KeyCode::Char('y') => {
             app.delete_focused_project()?;
@@ -190,7 +190,11 @@ fn handle_delete_project_events(key: KeyEvent, app: &mut App, prev: AppState) ->
     Ok(())
 }
 
-fn handle_tracker_events(key: KeyEvent, app: &mut App, state: AppState) -> Result<(), io::Error> {
+fn handle_tracker_events(
+    key: KeyEvent,
+    app: &mut App,
+    state: AppState
+) -> Result<(), io::Error> {
     match key.code {
         KeyCode::Char('q') => app.set_quit(true),
         KeyCode::Esc => app.set_quit(true),
@@ -282,7 +286,11 @@ fn handle_tracker_events(key: KeyEvent, app: &mut App, state: AppState) -> Resul
     Ok(())
 }
 
-fn handle_task_view_events(key: KeyEvent, app: &mut App, prev: AppState) -> Result<(), io::Error> {
+fn handle_task_view_events(
+    key: KeyEvent,
+    app: &mut App,
+    prev: AppState
+) -> Result<(), io::Error> {
     match key.code {
         KeyCode::Char('q') => app.set_quit(true),
         KeyCode::Char('s') => app.save_changes()?,
@@ -304,7 +312,11 @@ fn handle_task_view_events(key: KeyEvent, app: &mut App, prev: AppState) -> Resu
     Ok(())
 }
 
-fn handle_backlog_popup_events(key: KeyEvent, app: &mut App, prev: AppState) -> Result<(), io::Error> {
+fn handle_backlog_popup_events(
+    key: KeyEvent,
+    app: &mut App,
+    prev: AppState
+) -> Result<(), io::Error> {
     match key.code {
         KeyCode::Char('q') => app.set_quit(true),
         KeyCode::Char('s') => app.save_changes()?,
@@ -400,7 +412,11 @@ fn handle_backlog_popup_events(key: KeyEvent, app: &mut App, prev: AppState) -> 
     Ok(())
 }
 
-fn handle_archive_popup_events(key: KeyEvent, app: &mut App, prev: AppState) -> Result<(), io::Error> {
+fn handle_archive_popup_events(
+    key: KeyEvent,
+    app: &mut App,
+    prev: AppState
+) -> Result<(), io::Error> {
     match key.code {
         KeyCode::Char('q') => app.set_quit(true),
         KeyCode::Char('s') => app.save_changes()?,
