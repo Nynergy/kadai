@@ -66,8 +66,9 @@ $ cargo build
 $ cargo run <project-name>
 ```
 
-Where \<project-name\> is just the name of the project directory you want to
-create.
+Where \<project-name\> is just the name of the project you want to open. This is
+optional, and if you omit the project name, you will be presented with the
+project select menu, where you can select from among all your _kadai_ projects.
 
 To install it into your Cargo installation's install root, do:
 
@@ -80,6 +81,8 @@ otherwise your shell won't know where to find the installed binary. Once it's
 installed, you can run the app by simply running `kadai <project-name>`.
 
 ## How do I use it?
+
+Once installed, it's as easy as `kadai` or `kadai <project-name>`.
 
 Keybindings for the various interfaces are the following:
 
