@@ -86,15 +86,15 @@ impl App {
         }
 
         for i in 0..app.task_lists.len() {
-            if !app.task_lists[i].tasks.is_empty() {
-                app.task_lists[i].state.select(Some(0));
+            if !app.task_lists[i].is_empty() {
+                app.task_lists[i].select(Some(0));
             }
         }
-        if !app.backlog.tasks.is_empty() {
-            app.backlog.state.select(Some(0));
+        if !app.backlog.is_empty() {
+            app.backlog.select(Some(0));
         }
-        if !app.archive.tasks.is_empty() {
-            app.archive.state.select(Some(0));
+        if !app.archive.is_empty() {
+            app.archive.select(Some(0));
         }
 
         Ok(app)
@@ -113,15 +113,15 @@ impl App {
             self.archive = read_archive_file()?;
 
             for i in 0..self.task_lists.len() {
-                if !self.task_lists[i].tasks.is_empty() {
-                    self.task_lists[i].state.select(Some(0));
+                if !self.task_lists[i].is_empty() {
+                    self.task_lists[i].select(Some(0));
                 }
             }
-            if !self.backlog.tasks.is_empty() {
-                self.backlog.state.select(Some(0));
+            if !self.backlog.is_empty() {
+                self.backlog.select(Some(0));
             }
-            if !self.archive.tasks.is_empty() {
-                self.archive.state.select(Some(0));
+            if !self.archive.is_empty() {
+                self.archive.select(Some(0));
             }
         }
 
@@ -129,7 +129,7 @@ impl App {
     }
 
     pub fn get_highlighted_project(&self) -> Option<String> {
-        match self.project_list.state.selected() {
+        match self.project_list.get_selected_index() {
             Some(i) => Some(self.project_list.projects[i].clone()),
             None => None
         }
@@ -142,7 +142,7 @@ impl App {
     pub fn num_tracked_tasks(&self) -> usize {
         let sum: usize = self.task_lists
             .iter()
-            .map(|list| list.tasks.len())
+            .map(|list| list.len())
             .sum();
 
         sum
@@ -184,10 +184,10 @@ impl App {
     pub fn list_down(&mut self) {
         match self.state {
             AppState::ProjectMenu => {
-                if !self.project_list.projects.is_empty() {
-                    let i = match self.project_list.state.selected() {
+                if !self.project_list.is_empty() {
+                    let i = match self.project_list.get_selected_index() {
                         Some(i) => {
-                            if i >= self.project_list.projects.len() - 1 {
+                            if i >= self.project_list.len() - 1 {
                                 0
                             } else {
                                 i + 1
@@ -195,16 +195,16 @@ impl App {
                         },
                         None => 0,
                     };
-                    self.project_list.state.select(Some(i));
+                    self.project_list.select(Some(i));
                 }
             },
             _ => {
                 let list = self.get_mut_focused_list(&self.state.clone());
 
-                if !list.tasks.is_empty() {
-                    let i = match list.state.selected() {
+                if !list.is_empty() {
+                    let i = match list.get_selected_index() {
                         Some(i) => {
-                            if i >= list.tasks.len() - 1 {
+                            if i >= list.len() - 1 {
                                 0
                             } else {
                                 i + 1
@@ -212,7 +212,7 @@ impl App {
                         },
                         None => 0,
                     };
-                    list.state.select(Some(i));
+                    list.select(Some(i));
                 }
             }
         }
@@ -221,35 +221,35 @@ impl App {
     pub fn list_up(&mut self) {
         match self.state {
             AppState::ProjectMenu => {
-                if !self.project_list.projects.is_empty() {
-                    let i = match self.project_list.state.selected() {
+                if !self.project_list.is_empty() {
+                    let i = match self.project_list.get_selected_index() {
                         Some(i) => {
                             if i == 0 {
-                                self.project_list.projects.len() - 1
+                                self.project_list.len() - 1
                             } else {
                                 i - 1
                             }
                         },
-                        None => cmp::max(self.project_list.projects.len() - 1, 0),
+                        None => cmp::max(self.project_list.len() - 1, 0),
                     };
-                    self.project_list.state.select(Some(i));
+                    self.project_list.select(Some(i));
                 }
             },
             _ => {
                 let list = self.get_mut_focused_list(&self.state.clone());
 
-                if !list.tasks.is_empty() {
-                    let i = match list.state.selected() {
+                if !list.is_empty() {
+                    let i = match list.get_selected_index() {
                         Some(i) => {
                             if i == 0 {
-                                list.tasks.len() - 1
+                                list.len() - 1
                             } else {
                                 i - 1
                             }
                         },
-                        None => cmp::max(list.tasks.len() - 1, 0),
+                        None => cmp::max(list.len() - 1, 0),
                     };
-                    list.state.select(Some(i));
+                    list.select(Some(i));
                 }
             }
         }
@@ -270,10 +270,10 @@ impl App {
     pub fn task_up(&mut self) {
         let list = self.get_mut_focused_list(&self.state.clone());
 
-        if let Some(i) = list.state.selected() {
+        if let Some(i) = list.get_selected_index() {
             if let Some(index) = i.checked_sub(1) {
-                list.tasks.swap(i, index);
-                list.state.select(Some(index));
+                list.swap(i, index);
+                list.select(Some(index));
 
                 self.unsaved_changes = true;
             }
@@ -283,14 +283,38 @@ impl App {
     pub fn task_down(&mut self) {
         let list = self.get_mut_focused_list(&self.state.clone());
 
-        if let Some(i) = list.state.selected() {
+        if let Some(i) = list.get_selected_index() {
             let mut index = i + 1;
-            if index >= list.tasks.len() {
-                index = list.tasks.len() - 1;
+            if index >= list.len() {
+                index = list.len() - 1;
             }
 
-            list.tasks.swap(i, index);
-            list.state.select(Some(index));
+            list.swap(i, index);
+            list.select(Some(index));
+
+            self.unsaved_changes = true;
+        }
+    }
+
+    pub fn task_to_bottom(&mut self) {
+        let list = self.get_mut_focused_list(&self.state.clone());
+
+        if let Some(i) = list.get_selected_index() {
+            let task = list.remove(i);
+            list.push(task);
+            list.select(Some(list.len() - 1));
+
+            self.unsaved_changes = true;
+        }
+    }
+
+    pub fn task_to_top(&mut self) {
+        let list = self.get_mut_focused_list(&self.state.clone());
+
+        if let Some(i) = list.get_selected_index() {
+            let task = list.remove(i);
+            list.insert(0, task);
+            list.select(Some(0));
 
             self.unsaved_changes = true;
         }
@@ -299,15 +323,15 @@ impl App {
     pub fn jump_to_list_top(&mut self) {
         match self.state {
             AppState::ProjectMenu => {
-                if let Some(_) = self.project_list.state.selected() {
-                    self.project_list.state.select(Some(0));
+                if let Some(_) = self.project_list.get_selected_index() {
+                    self.project_list.select(Some(0));
                 }
             },
             _ => {
                 let list = self.get_mut_focused_list(&self.state.clone());
 
-                if let Some(_) = list.state.selected() {
-                    list.state.select(Some(0));
+                if let Some(_) = list.get_selected_index() {
+                    list.select(Some(0));
                 }
             }
         }
@@ -316,15 +340,15 @@ impl App {
     pub fn jump_to_list_bottom(&mut self) {
         match self.state {
             AppState::ProjectMenu => {
-                if let Some(_) = self.project_list.state.selected() {
-                    self.project_list.state.select(Some(self.project_list.projects.len() - 1));
+                if let Some(_) = self.project_list.get_selected_index() {
+                    self.project_list.select(Some(self.project_list.len() - 1));
                 }
             },
             _ => {
                 let list = self.get_mut_focused_list(&self.state.clone());
 
-                if let Some(_) = list.state.selected() {
-                    list.state.select(Some(list.tasks.len() - 1));
+                if let Some(_) = list.get_selected_index() {
+                    list.select(Some(list.len() - 1));
                 }
             }
         }
@@ -355,24 +379,24 @@ impl App {
         if self.active_list != self.task_lists.len() - 1 {
             let list = &mut self.task_lists[self.active_list];
 
-            match list.state.selected() {
+            match list.get_selected_index() {
                 Some(i) => {
-                    let task = list.tasks.remove(i);
-                    if list.tasks.len() == 0 {
-                        list.state.select(None);
-                    } else if i == list.tasks.len() {
-                        list.state.select(Some(i - 1));
+                    let task = list.remove(i);
+                    if list.len() == 0 {
+                        list.select(None);
+                    } else if i == list.len() {
+                        list.select(Some(i - 1));
                     }
 
                     self.next_list();
                     let list = &mut self.task_lists[self.active_list];
 
-                    list.tasks.push(task);
-                    list.state.select(Some(list.tasks.len() - 1));
+                    list.push(task);
+                    list.select(Some(list.len() - 1));
 
                     self.unsaved_changes = true;
                 },
-                None => return,
+                None => {}
             }
         }
     }
@@ -381,24 +405,24 @@ impl App {
         if self.active_list != 0 {
             let list = &mut self.task_lists[self.active_list];
 
-            match list.state.selected() {
+            match list.get_selected_index() {
                 Some(i) => {
-                    let task = list.tasks.remove(i);
-                    if list.tasks.len() == 0 {
-                        list.state.select(None);
-                    } else if i == list.tasks.len() {
-                        list.state.select(Some(i - 1));
+                    let task = list.remove(i);
+                    if list.len() == 0 {
+                        list.select(None);
+                    } else if i == list.len() {
+                        list.select(Some(i - 1));
                     }
 
                     self.prev_list();
                     let list = &mut self.task_lists[self.active_list];
 
-                    list.tasks.push(task);
-                    list.state.select(Some(list.tasks.len() - 1));
+                    list.push(task);
+                    list.select(Some(list.len() - 1));
 
                     self.unsaved_changes = true;
                 },
-                None => return,
+                None => {}
             }
         }
     }
@@ -410,18 +434,18 @@ impl App {
 
         let list = self.get_mut_focused_list(&self.state.clone());
 
-        if let Some(i) = list.state.selected() {
-            let task = list.tasks.remove(i);
-            if list.tasks.len() == 0 {
-                list.state.select(None);
-            } else if i == list.tasks.len() {
-                list.state.select(Some(i - 1));
+        if let Some(i) = list.get_selected_index() {
+            let task = list.remove(i);
+            if list.len() == 0 {
+                list.select(None);
+            } else if i == list.len() {
+                list.select(Some(i - 1));
             }
 
             let dest = &mut self.task_lists[index];
-            dest.tasks.push(task);
-            if dest.tasks.len() == 1 {
-                dest.state.select(Some(0));
+            dest.push(task);
+            if dest.len() == 1 {
+                dest.select(Some(0));
             }
 
             self.unsaved_changes = true;
@@ -431,18 +455,18 @@ impl App {
     pub fn move_task_to_backlog(&mut self) {
         let list = &mut self.task_lists[self.active_list];
 
-        if let Some(i) = list.state.selected() {
-            let task = list.tasks.remove(i);
-            if list.tasks.len() == 0 {
-                list.state.select(None);
-            } else if i == list.tasks.len() {
-                list.state.select(Some(i - 1));
+        if let Some(i) = list.get_selected_index() {
+            let task = list.remove(i);
+            if list.len() == 0 {
+                list.select(None);
+            } else if i == list.len() {
+                list.select(Some(i - 1));
             }
 
             let dest = &mut self.backlog;
-            dest.tasks.push(task);
-            if dest.tasks.len() == 1 {
-                dest.state.select(Some(0));
+            dest.push(task);
+            if dest.len() == 1 {
+                dest.select(Some(0));
             }
 
             self.unsaved_changes = true;
@@ -451,18 +475,18 @@ impl App {
 
     pub fn move_task_to_archive(&mut self) {
         let list = &mut self.task_lists[self.active_list];
-        if let Some(i) = list.state.selected() {
-            let task = list.tasks.remove(i);
-            if list.tasks.len() == 0 {
-                list.state.select(None);
-            } else if i == list.tasks.len() {
-                list.state.select(Some(i - 1));
+        if let Some(i) = list.get_selected_index() {
+            let task = list.remove(i);
+            if list.len() == 0 {
+                list.select(None);
+            } else if i == list.len() {
+                list.select(Some(i - 1));
             }
 
             let dest = &mut self.archive;
-            dest.tasks.push(task);
-            if dest.tasks.len() == 1 {
-                dest.state.select(Some(0));
+            dest.push(task);
+            if dest.len() == 1 {
+                dest.select(Some(0));
             }
 
             self.unsaved_changes = true;
@@ -485,7 +509,7 @@ impl App {
     pub fn focused_list_is_empty(&self) -> bool {
         let list = self.get_focused_list(&self.state);
 
-        list.tasks.is_empty()
+        list.is_empty()
     }
 
     pub fn scroll_details(&mut self, amount: i16) {
@@ -572,6 +596,11 @@ impl App {
         input.pop();
     }
 
+    pub fn delete_to_prev_space(&mut self) {
+        self.input_jump_to_space_left();
+        self.input_truncate_to_cursor();
+    }
+
     pub fn next_detail_input(&mut self) {
         self.active_detail_input += 1;
         self.active_detail_input %= self.task_detail_inputs.len();
@@ -623,9 +652,9 @@ impl App {
                     _ => return
                 };
 
-                if let Some(i) = list.state.selected() {
-                    list.tasks.remove(i);
-                    list.tasks.insert(i, new_task);
+                if let Some(i) = list.get_selected_index() {
+                    list.remove(i);
+                    list.insert(i, new_task);
                 }
             },
             AppState::CreateTask(prev) => {
@@ -636,9 +665,9 @@ impl App {
                     _ => return
                 };
 
-                list.tasks.push(new_task);
-                if list.tasks.len() == 1 {
-                    list.state.select(Some(0));
+                list.push(new_task);
+                if list.len() == 1 {
+                    list.select(Some(0));
                 }
             },
             _ => {}
@@ -717,12 +746,12 @@ impl App {
                 _ => return
             };
 
-            if let Some(i) = list.state.selected() {
-                list.tasks.remove(i);
-                if list.tasks.is_empty() {
-                    list.state.select(None);
-                } else if i >= list.tasks.len() {
-                    list.state.select(Some(i - 1));
+            if let Some(i) = list.get_selected_index() {
+                list.remove(i);
+                if list.is_empty() {
+                    list.select(None);
+                } else if i >= list.len() {
+                    list.select(Some(i - 1));
                 }
 
                 self.unsaved_changes = true;
@@ -834,6 +863,20 @@ impl App {
         input.move_to_next_space();
     }
 
+    pub fn input_truncate_to_cursor(&mut self) {
+        let input = match self.state {
+            AppState::EditProject(_) => &mut self.project_detail_input,
+            AppState::CreateProject(_) => &mut self.project_detail_input,
+            AppState::EditTask(_) => &mut self.task_detail_inputs[self.active_detail_input],
+            AppState::CreateTask(_) => &mut self.task_detail_inputs[self.active_detail_input],
+            AppState::EditList(_) => &mut self.list_detail_input,
+            AppState::CreateList(_) => &mut self.list_detail_input,
+            _ => unreachable!()
+        };
+
+        input.truncate_to_cursor();
+    }
+
     pub fn clear_project_inputs(&mut self) {
         self.project_detail_input.clear();
     }
@@ -847,9 +890,9 @@ impl App {
 
         match &self.state {
             AppState::EditProject(_prev) => {
-                if let Some(i) = self.project_list.state.selected() {
-                    let old_name = self.project_list.projects.remove(i);
-                    self.project_list.projects.insert(i, name.clone());
+                if let Some(i) = self.project_list.get_selected_index() {
+                    let old_name = self.project_list.remove(i);
+                    self.project_list.insert(i, name.clone());
 
                     let mut old_path = env::current_dir()?;
                     old_path.push(old_name.clone());
@@ -859,9 +902,9 @@ impl App {
                 }
             },
             AppState::CreateProject(_prev) => {
-                self.project_list.projects.push(name.clone());
-                if self.project_list.projects.len() == 1 {
-                    self.project_list.state.select(Some(0));
+                self.project_list.push(name.clone());
+                if self.project_list.len() == 1 {
+                    self.project_list.select(Some(0));
                 }
 
                 let mut path = env::current_dir()?;
@@ -875,16 +918,16 @@ impl App {
     }
 
     pub fn delete_focused_project(&mut self) -> Result<(), std::io::Error> {
-        if let Some(i) = self.project_list.state.selected() {
-            let project = self.project_list.projects.remove(i);
+        if let Some(i) = self.project_list.get_selected_index() {
+            let project = self.project_list.remove(i);
             let mut path = env::current_dir()?;
             path.push(project.clone());
             fs::remove_dir_all(&path)?;
 
-            if self.project_list.projects.is_empty() {
-                self.project_list.state.select(None);
-            } else if i >= self.project_list.projects.len() {
-                self.project_list.state.select(Some(i - 1));
+            if self.project_list.is_empty() {
+                self.project_list.select(None);
+            } else if i >= self.project_list.len() {
+                self.project_list.select(Some(i - 1));
             }
         }
 
@@ -892,7 +935,7 @@ impl App {
     }
 
     pub fn populate_project_detail_inputs(&mut self) {
-        if let Some(i) = self.project_list.state.selected() {
+        if let Some(i) = self.project_list.get_selected_index() {
             let project = &self.project_list.projects[i];
             self.project_detail_input = Input::from(project.clone());
         }

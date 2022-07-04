@@ -54,6 +54,38 @@ impl TaskList {
             tasks: Vec::new(),
         }
     }
+
+    pub fn is_empty(&self) -> bool {
+        self.tasks.is_empty()
+    }
+
+    pub fn select(&mut self, index: Option<usize>) {
+        self.state.select(index);
+    }
+
+    pub fn get_selected_index(&self) -> Option<usize> {
+        self.state.selected()
+    }
+
+    pub fn len(&self) -> usize {
+        self.tasks.len()
+    }
+
+    pub fn swap(&mut self, i1: usize, i2: usize) {
+        self.tasks.swap(i1, i2);
+    }
+
+    pub fn remove(&mut self, i: usize) -> Task {
+        self.tasks.remove(i)
+    }
+
+    pub fn push(&mut self, task: Task) {
+        self.tasks.push(task);
+    }
+
+    pub fn insert(&mut self, i: usize, task: Task) {
+        self.tasks.insert(i, task);
+    }
 }
 
 pub struct ProjectList {
@@ -73,6 +105,34 @@ impl ProjectList {
         }
 
         Ok(list)
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.projects.is_empty()
+    }
+
+    pub fn select(&mut self, index: Option<usize>) {
+        self.state.select(index);
+    }
+
+    pub fn get_selected_index(&self) -> Option<usize> {
+        self.state.selected()
+    }
+
+    pub fn len(&self) -> usize {
+        self.projects.len()
+    }
+
+    pub fn remove(&mut self, i: usize) -> String {
+        self.projects.remove(i)
+    }
+
+    pub fn push(&mut self, project: String) {
+        self.projects.push(project);
+    }
+
+    pub fn insert(&mut self, i: usize, project: String) {
+        self.projects.insert(i, project);
     }
 }
 

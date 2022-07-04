@@ -1,5 +1,5 @@
 use std::borrow::Cow;
-use textwrap::wrap;
+use textwrap::{Options, WrapAlgorithm, wrap};
 use tui::{
     backend::Backend,
     buffer::Buffer,
@@ -29,6 +29,7 @@ use tui::{
 };
 
 use crate::app::*;
+use crate::inputs::*;
 use crate::lists::*;
 
 struct CustomBorder {
@@ -109,7 +110,7 @@ pub fn ui<B: Backend>(frame: &mut Frame<B>, app: &mut App, state: AppState) {
         },
         AppState::DeleteProject(prev) => {
             ui(frame, app, *prev);
-            render_prompt(frame, app, "Delete Highlighted Project?".to_string());
+            render_prompt(frame, "Delete Highlighted Project?".to_string());
         },
         AppState::Tracker => render_tracker(frame, app),
         AppState::TaskView(prev) => {
@@ -134,7 +135,7 @@ pub fn ui<B: Backend>(frame: &mut Frame<B>, app: &mut App, state: AppState) {
         },
         AppState::DeleteTask(prev) => {
             ui(frame, app, *prev);
-            render_prompt(frame, app, "Delete Highlighted Task?".to_string());
+            render_prompt(frame, "Delete Highlighted Task?".to_string());
         },
         AppState::EditList(prev) => {
             ui(frame, app, *prev);
@@ -146,7 +147,7 @@ pub fn ui<B: Backend>(frame: &mut Frame<B>, app: &mut App, state: AppState) {
         },
         AppState::DeleteList(prev) => {
             ui(frame, app, *prev);
-            render_prompt(frame, app, "Delete Focused List?".to_string());
+            render_prompt(frame, "Delete Focused List?".to_string());
         },
     }
 }
@@ -212,7 +213,7 @@ fn render_project_menu<B: Backend>(
 
     let list_area = centered_rect(40, 100, chunks[1]);
 
-    if app.project_list.projects.is_empty() {
+    if app.project_list.is_empty() {
         let mut commands = vec![
             Spans::from(
                 Span::raw("There are currently no projects."),
@@ -375,7 +376,7 @@ fn render_info_bar<B: Backend>(
 
     let right = Spans::from(vec![
         Span::styled(
-            app.backlog.tasks.len().to_string(),
+            app.backlog.len().to_string(),
             Style::default()
             .fg(Color::Indexed(app.backlog.color_index))
             .add_modifier(Modifier::BOLD)
@@ -399,7 +400,7 @@ fn render_info_bar<B: Backend>(
         ),
         Span::raw(" | "),
         Span::styled(
-            app.archive.tasks.len().to_string(),
+            app.archive.len().to_string(),
             Style::default()
             .fg(Color::Indexed(app.archive.color_index))
             .add_modifier(Modifier::BOLD)
@@ -752,33 +753,12 @@ fn render_task_editor<B: Backend>(
     // Display the blinking cursor, wrapped appropriately
     let i = app.active_detail_input;
     let input = &app.task_detail_inputs[i];
-    let input_width = chunks[i].width as usize - 2;
-    let trailing_spaces = &input.num_trailing_spaces();
-    let strings = wrap(&input.text, input_width);
-    let string = &mut strings[strings.len() - 1].to_string();
-    for _ in 0..*trailing_spaces {
-        string.push(' ');
-    }
-
-    let mut cursor_pos = (0, 0);
-    let mut running_pos = 0;
-    for line in strings.iter() {
-        let new_len = line.len() + running_pos + trailing_spaces;
-        if new_len < input.pos {
-            running_pos += line.len();
-            if line.len() < input_width {
-                running_pos += 1;
-            }
-            cursor_pos.1 += 1;
-        } else {
-            cursor_pos.0 = input.pos - running_pos;
-            break;
-        }
-    }
+    let input_area = chunks[i];
+    let cursor_pos = get_wrapped_cursor_pos(input, input_area);
 
     frame.set_cursor(
         chunks[i].x + cursor_pos.0 as u16 + 1,
-        chunks[i].y + cursor_pos.1 as u16 + 1
+        chunks[i].y + cursor_pos.1 as u16
     );
 
     let info = Paragraph::new(
@@ -859,33 +839,12 @@ fn render_list_editor<B: Backend>(
 
     // Display the blinking cursor, wrapped appropriately
     let input = &app.list_detail_input;
-    let input_width = chunks[0].width as usize - 2;
-    let trailing_spaces = &input.num_trailing_spaces();
-    let strings = wrap(&input.text, input_width);
-    let string = &mut strings[strings.len() - 1].to_string();
-    for _ in 0..*trailing_spaces {
-        string.push(' ');
-    }
-
-    let mut cursor_pos = (0, 0);
-    let mut running_pos = 0;
-    for line in strings.iter() {
-        let new_len = line.len() + running_pos + trailing_spaces;
-        if new_len < input.pos {
-            running_pos += line.len();
-            if line.len() < input_width {
-                running_pos += 1;
-            }
-            cursor_pos.1 += 1;
-        } else {
-            cursor_pos.0 = input.pos - running_pos;
-            break;
-        }
-    }
+    let input_area = chunks[0];
+    let cursor_pos = get_wrapped_cursor_pos(input, input_area);
 
     frame.set_cursor(
         chunks[0].x + cursor_pos.0 as u16 + 1,
-        chunks[0].y + cursor_pos.1 as u16 + 1
+        chunks[0].y + cursor_pos.1 as u16
     );
 
     let info = Paragraph::new(
@@ -966,33 +925,12 @@ fn render_project_editor<B: Backend>(
 
     // Display the blinking cursor, wrapped appropriately
     let input = &app.project_detail_input;
-    let input_width = chunks[0].width as usize - 2;
-    let trailing_spaces = &input.num_trailing_spaces();
-    let strings = wrap(&input.text, input_width);
-    let string = &mut strings[strings.len() - 1].to_string();
-    for _ in 0..*trailing_spaces {
-        string.push(' ');
-    }
-
-    let mut cursor_pos = (0, 0);
-    let mut running_pos = 0;
-    for line in strings.iter() {
-        let new_len = line.len() + running_pos + trailing_spaces;
-        if new_len < input.pos {
-            running_pos += line.len();
-            if line.len() < input_width {
-                running_pos += 1;
-            }
-            cursor_pos.1 += 1;
-        } else {
-            cursor_pos.0 = input.pos - running_pos;
-            break;
-        }
-    }
+    let input_area = chunks[0];
+    let cursor_pos = get_wrapped_cursor_pos(input, input_area);
 
     frame.set_cursor(
         chunks[0].x + cursor_pos.0 as u16 + 1,
-        chunks[0].y + cursor_pos.1 as u16 + 1
+        chunks[0].y + cursor_pos.1 as u16
     );
 
     let info = Paragraph::new(
@@ -1024,7 +962,6 @@ fn render_project_editor<B: Backend>(
 
 fn render_prompt<B: Backend>(
     frame: &mut Frame<B>,
-    _app: &mut App,
     prompt: String,
 ) {
     let size = frame.size();
@@ -1318,4 +1255,18 @@ fn centered_fixed_size_rect(width: usize, height: usize, size: Rect) -> Rect {
 fn shrink_rect(rect: Rect, amount: u16) -> Rect {
     let margin = Margin { vertical: amount, horizontal: amount };
     rect.inner(&margin)
+}
+
+fn get_wrapped_cursor_pos(input: &Input, area: Rect) -> (usize, usize) {
+    let input_width = area.width as usize - 2;
+    let trailing_spaces = &input.num_trailing_spaces();
+    let wrap_options = Options::new(input_width)
+        .wrap_algorithm(WrapAlgorithm::FirstFit);
+    let strings = wrap(&input.text, wrap_options);
+    let string = &mut strings[strings.len() - 1].to_string();
+    for _ in 0..*trailing_spaces {
+        string.push(' ');
+    }
+
+    (string.len(), strings.len())
 }

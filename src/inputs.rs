@@ -111,6 +111,10 @@ impl Input {
             None => self.pos = self.len()
         }
     }
+
+    pub fn truncate_to_cursor(&mut self) {
+        self.text.truncate(self.pos);
+    }
 }
 
 impl<'a> From<Input> for Text<'a> {

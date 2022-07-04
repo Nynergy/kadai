@@ -52,7 +52,7 @@ fn handle_project_menu_events(
             );
         },
         KeyCode::Char('d') => {
-            if !app.project_list.projects.is_empty() {
+            if !app.project_list.is_empty() {
                 app.change_state(
                     AppState::DeleteProject(
                         Box::new(state)
@@ -61,7 +61,7 @@ fn handle_project_menu_events(
             }
         },
         KeyCode::Char('e') => {
-            if !app.project_list.projects.is_empty() {
+            if !app.project_list.is_empty() {
                 app.populate_project_detail_inputs();
                 app.change_state(
                     AppState::EditProject(
@@ -79,13 +79,13 @@ fn handle_project_menu_events(
         KeyCode::Char('G') => app.jump_to_list_bottom(),
         KeyCode::End => app.jump_to_list_bottom(),
         KeyCode::Enter => {
-            if !app.project_list.projects.is_empty() {
+            if !app.project_list.is_empty() {
                 app.select_project()?;
                 app.change_state(AppState::Tracker);
             }
         },
         KeyCode::Char(' ') => {
-            if !app.project_list.projects.is_empty() {
+            if !app.project_list.is_empty() {
                 app.select_project()?;
                 app.change_state(AppState::Tracker);
             }
@@ -102,7 +102,15 @@ fn handle_edit_project_events(
     prev: AppState
 ) -> Result<(), io::Error> {
     match key.code {
-        KeyCode::Char(c) => app.add_to_detail_input(c),
+        KeyCode::Char(c) => {
+            match key {
+                KeyEvent {
+                    code: KeyCode::Char('w'),
+                    modifiers: KeyModifiers::CONTROL,
+                } => app.delete_to_prev_space(),
+                _ => app.add_to_detail_input(c)
+            }
+        },
         KeyCode::Backspace => app.delete_from_detail_input(),
         KeyCode::Delete => app.clear_focused_input(),
         KeyCode::Left => {
@@ -138,7 +146,15 @@ fn handle_create_project_events(
     prev: AppState
 ) -> Result<(), io::Error> {
     match key.code {
-        KeyCode::Char(c) => app.add_to_detail_input(c),
+        KeyCode::Char(c) => {
+            match key {
+                KeyEvent {
+                    code: KeyCode::Char('w'),
+                    modifiers: KeyModifiers::CONTROL,
+                } => app.delete_to_prev_space(),
+                _ => app.add_to_detail_input(c)
+            }
+        },
         KeyCode::Backspace => app.delete_from_detail_input(),
         KeyCode::Delete => app.clear_focused_input(),
         KeyCode::Left => {
@@ -227,7 +243,13 @@ fn handle_tracker_events(
             app.populate_list_detail_inputs();
             app.change_state(AppState::EditList(Box::new(state)));
         },
-        KeyCode::Char('j') => app.list_down(),
+        KeyCode::Char('j') => {
+            match key.modifiers {
+                KeyModifiers::NONE => app.list_down(),
+                KeyModifiers::CONTROL => app.task_to_bottom(),
+                _ => {}
+            }
+        },
         KeyCode::Char('J') => app.task_down(),
         KeyCode::Down => {
             match key.modifiers {
@@ -236,7 +258,13 @@ fn handle_tracker_events(
                 _ => {}
             }
         },
-        KeyCode::Char('k') => app.list_up(),
+        KeyCode::Char('k') => {
+            match key.modifiers {
+                KeyModifiers::NONE => app.list_up(),
+                KeyModifiers::CONTROL => app.task_to_top(),
+                _ => {}
+            }
+        },
         KeyCode::Char('K') => app.task_up(),
         KeyCode::Up => {
             match key.modifiers {
@@ -361,7 +389,13 @@ fn handle_backlog_popup_events(
                 );
             }
         },
-        KeyCode::Char('j') => app.list_down(),
+        KeyCode::Char('j') => {
+            match key.modifiers {
+                KeyModifiers::NONE => app.list_down(),
+                KeyModifiers::CONTROL => app.task_to_bottom(),
+                _ => {}
+            }
+        },
         KeyCode::Char('J') => app.task_down(),
         KeyCode::Down => {
             match key.modifiers {
@@ -370,7 +404,13 @@ fn handle_backlog_popup_events(
                 _ => {}
             }
         },
-        KeyCode::Char('k') => app.list_up(),
+        KeyCode::Char('k') => {
+            match key.modifiers {
+                KeyModifiers::NONE => app.list_up(),
+                KeyModifiers::CONTROL => app.task_to_top(),
+                _ => {}
+            }
+        },
         KeyCode::Char('K') => app.task_up(),
         KeyCode::Up => {
             match key.modifiers {
@@ -433,7 +473,13 @@ fn handle_archive_popup_events(
                 );
             }
         },
-        KeyCode::Char('j') => app.list_down(),
+        KeyCode::Char('j') => {
+            match key.modifiers {
+                KeyModifiers::NONE => app.list_down(),
+                KeyModifiers::CONTROL => app.task_to_bottom(),
+                _ => {}
+            }
+        },
         KeyCode::Char('J') => app.task_down(),
         KeyCode::Down => {
             match key.modifiers {
@@ -442,7 +488,13 @@ fn handle_archive_popup_events(
                 _ => {}
             }
         },
-        KeyCode::Char('k') => app.list_up(),
+        KeyCode::Char('k') => {
+            match key.modifiers {
+                KeyModifiers::NONE => app.list_up(),
+                KeyModifiers::CONTROL => app.task_to_top(),
+                _ => {}
+            }
+        },
         KeyCode::Char('K') => app.task_up(),
         KeyCode::Up => {
             match key.modifiers {
@@ -489,7 +541,15 @@ fn handle_archive_popup_events(
 
 fn handle_edit_task_events(key: KeyEvent, app: &mut App, prev: AppState) {
     match key.code {
-        KeyCode::Char(c) => app.add_to_detail_input(c),
+        KeyCode::Char(c) => {
+            match key {
+                KeyEvent {
+                    code: KeyCode::Char('w'),
+                    modifiers: KeyModifiers::CONTROL,
+                } => app.delete_to_prev_space(),
+                _ => app.add_to_detail_input(c)
+            }
+        },
         KeyCode::Backspace => app.delete_from_detail_input(),
         KeyCode::Delete => app.clear_focused_input(),
         KeyCode::Left => {
@@ -523,7 +583,15 @@ fn handle_edit_task_events(key: KeyEvent, app: &mut App, prev: AppState) {
 
 fn handle_create_task_events(key: KeyEvent, app: &mut App, prev: AppState) {
     match key.code {
-        KeyCode::Char(c) => app.add_to_detail_input(c),
+        KeyCode::Char(c) => {
+            match key {
+                KeyEvent {
+                    code: KeyCode::Char('w'),
+                    modifiers: KeyModifiers::CONTROL,
+                } => app.delete_to_prev_space(),
+                _ => app.add_to_detail_input(c)
+            }
+        },
         KeyCode::Backspace => app.delete_from_detail_input(),
         KeyCode::Delete => app.clear_focused_input(),
         KeyCode::Left => {
@@ -573,7 +641,15 @@ fn handle_delete_task_events(key: KeyEvent, app: &mut App, prev: AppState) {
 
 fn handle_edit_list_events(key: KeyEvent, app: &mut App, prev: AppState) {
     match key.code {
-        KeyCode::Char(c) => app.add_to_detail_input(c),
+        KeyCode::Char(c) => {
+            match key {
+                KeyEvent {
+                    code: KeyCode::Char('w'),
+                    modifiers: KeyModifiers::CONTROL,
+                } => app.delete_to_prev_space(),
+                _ => app.add_to_detail_input(c)
+            }
+        },
         KeyCode::Backspace => app.delete_from_detail_input(),
         KeyCode::Delete => app.clear_focused_input(),
         KeyCode::Left => {
@@ -603,7 +679,15 @@ fn handle_edit_list_events(key: KeyEvent, app: &mut App, prev: AppState) {
 
 fn handle_create_list_events(key: KeyEvent, app: &mut App, prev: AppState) {
     match key.code {
-        KeyCode::Char(c) => app.add_to_detail_input(c),
+        KeyCode::Char(c) => {
+            match key {
+                KeyEvent {
+                    code: KeyCode::Char('w'),
+                    modifiers: KeyModifiers::CONTROL,
+                } => app.delete_to_prev_space(),
+                _ => app.add_to_detail_input(c)
+            }
+        },
         KeyCode::Backspace => app.delete_from_detail_input(),
         KeyCode::Delete => app.clear_focused_input(),
         KeyCode::Left => {
