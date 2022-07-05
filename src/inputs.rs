@@ -2,6 +2,7 @@ use tui::text::Text;
 
 #[derive(Clone)]
 pub struct Input {
+    pub name: String,
     pub text: String,
     pub pos: usize,
 }
@@ -9,6 +10,7 @@ pub struct Input {
 impl Input {
     pub fn new() -> Self {
         Self {
+            name: String::new(),
             text: String::new(),
             pos: 0,
         }
@@ -16,9 +18,15 @@ impl Input {
 
     pub fn from(text: String) -> Self {
         Self {
+            name: String::new(),
             text: text.clone(),
             pos: text.len(),
         }
+    }
+
+    pub fn name(mut self, name: String) -> Self {
+        self.name = name;
+        self
     }
 
     pub fn len(&self) -> usize {
@@ -120,5 +128,17 @@ impl Input {
 impl<'a> From<Input> for Text<'a> {
     fn from(i: Input) -> Text<'a> {
         Text::raw(i.text)
+    }
+}
+
+impl<'a> From<&Input> for Text<'a> {
+    fn from(i: &Input) -> Text<'a> {
+        Text::raw(i.clone().text)
+    }
+}
+
+impl<'a> From<&mut Input> for Text<'a> {
+    fn from(i: &mut Input) -> Text<'a> {
+        Text::raw(i.clone().text)
     }
 }

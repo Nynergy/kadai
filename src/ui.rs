@@ -1,4 +1,7 @@
-use std::borrow::Cow;
+use std::{
+    borrow::Cow,
+    cmp
+};
 use textwrap::{Options, WrapAlgorithm, wrap};
 use tui::{
     backend::Backend,
@@ -31,6 +34,22 @@ use tui::{
 use crate::app::*;
 use crate::inputs::*;
 use crate::lists::*;
+
+macro_rules! raw_para {
+    ( $( $x:expr ),* ) => {
+        {
+            let mut temp_para = Vec::new();
+            $(
+                temp_para.push(
+                    Spans::from(
+                        Span::raw($x)
+                    )
+                );
+            )*
+            temp_para
+        }
+    };
+}
 
 struct CustomBorder {
     title: String,
@@ -102,11 +121,11 @@ pub fn ui<B: Backend>(frame: &mut Frame<B>, app: &mut App, state: AppState) {
         AppState::ProjectMenu => render_project_menu(frame, app),
         AppState::EditProject(prev) => {
             ui(frame, app, *prev);
-            render_project_editor(frame, app, "Edit Project Details".to_string());
+            render_single_input_editor(frame, app, "Edit Project Details".to_string());
         },
         AppState::CreateProject(prev) => {
             ui(frame, app, *prev);
-            render_project_editor(frame, app, "Create New Project".to_string());
+            render_single_input_editor(frame, app, "Create New Project".to_string());
         },
         AppState::DeleteProject(prev) => {
             ui(frame, app, *prev);
@@ -119,11 +138,11 @@ pub fn ui<B: Backend>(frame: &mut Frame<B>, app: &mut App, state: AppState) {
         },
         AppState::BacklogPopup(prev) => {
             ui(frame, app, *prev);
-            render_backlog_popup(frame, app);
+            render_list_popup(frame, app);
         },
         AppState::ArchivePopup(prev) => {
             ui(frame, app, *prev);
-            render_archive_popup(frame, app);
+            render_list_popup(frame, app);
         },
         AppState::EditTask(prev) => {
             ui(frame, app, *prev);
@@ -139,11 +158,11 @@ pub fn ui<B: Backend>(frame: &mut Frame<B>, app: &mut App, state: AppState) {
         },
         AppState::EditList(prev) => {
             ui(frame, app, *prev);
-            render_list_editor(frame, app, "Edit List Details".to_string());
+            render_single_input_editor(frame, app, "Edit List Details".to_string());
         },
         AppState::CreateList(prev) => {
             ui(frame, app, *prev);
-            render_list_editor(frame, app, "Create New List".to_string());
+            render_single_input_editor(frame, app, "Create New List".to_string());
         },
         AppState::DeleteList(prev) => {
             ui(frame, app, *prev);
@@ -170,35 +189,17 @@ fn render_project_menu<B: Backend>(
         )
         .split(size);
 
-    let banner = vec![
-        Spans::from(
-            Span::raw(""),
-        ),
-        Spans::from(
-            Span::raw("    __             __      _ "),
-        ),
-        Spans::from(
-            Span::raw("   / /______ _____/ /___ _(_)"),
-        ),
-        Spans::from(
-            Span::raw("  / //_/ __ `/ __  / __ `/ / "),
-        ),
-        Spans::from(
-            Span::raw(" / ,< / /_/ / /_/ / /_/ / /  "),
-        ),
-        Spans::from(
-            Span::raw("/_/|_|\\__,_/\\__,_/\\__,_/_/   "),
-        ),
-        Spans::from(
-            Span::raw(""),
-        ),
-        Spans::from(
-            Span::raw("A Task Tracker For The Terminal"),
-        ),
-        Spans::from(
-            Span::raw(""),
-        ),
-    ];
+    let banner = raw_para!(
+        "",
+        "    __             __      _ ",
+        "   / /______ _____/ /___ _(_)",
+        "  / //_/ __ `/ __  / __ `/ / ",
+        " / ,< / /_/ / /_/ / /_/ / /  ",
+        "/_/|_|\\__,_/\\__,_/\\__,_/_/   ",
+        "",
+        "A Task Tracker For The Terminal",
+        ""
+    );
 
     let banner = Paragraph::new(banner)
         .block(Block::default())
@@ -214,17 +215,11 @@ fn render_project_menu<B: Backend>(
     let list_area = centered_rect(40, 100, chunks[1]);
 
     if app.project_list.is_empty() {
-        let mut commands = vec![
-            Spans::from(
-                Span::raw("There are currently no projects."),
-            ),
-            Spans::from(
-                Span::raw(""),
-            ),
-            Spans::from(
-                Span::raw("Hit 'n' to create and open a new project."),
-            ),
-        ];
+        let mut commands = raw_para!(
+            "There are currently no projects.",
+            "",
+            "Hit 'n' to create and open a new project."
+        );
 
         for _ in 0..chunks[1].height / 2 - 2 {
             commands.insert(0, Spans::from(Span::raw("")));
@@ -268,14 +263,10 @@ fn render_project_menu<B: Backend>(
         frame.render_stateful_widget(list, list_area, &mut app.project_list.state);
     }
 
-    let info = vec![
-        Spans::from(
-            Span::raw(""),
-        ),
-        Spans::from(
-            Span::raw("kadai v1.1.0 by Ben Buchanan (https://github.com/Nynergy)"),
-        ),
-    ];
+    let info = raw_para!(
+        "",
+        "kadai v1.1.0 by Ben Buchanan (https://github.com/Nynergy)"
+    );
 
     let info = Paragraph::new(info)
         .block(Block::default())
@@ -283,6 +274,93 @@ fn render_project_menu<B: Backend>(
 
     frame.render_widget(info, chunks[2]);
 }
+
+fn render_single_input_editor<B: Backend>(
+    frame: &mut Frame<B>,
+    app: &mut App,
+    editor_title: String,
+) {
+    let size = frame.size();
+    let area = centered_fixed_size_rect((size.width as f32 * 0.6) as usize, 7, size);
+    let area_block = Block::default()
+        .title(
+            Span::styled(
+                editor_title,
+                Style::default()
+                .add_modifier(Modifier::BOLD)
+            )
+        )
+        .title_alignment(Alignment::Center)
+        .borders(Borders::ALL)
+        .border_type(BorderType::Double);
+
+    frame.render_widget(Clear, area); // Clear the area first
+    frame.render_widget(area_block, area);
+
+    let inner_area = shrink_rect(area, 1);
+
+    let chunks = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints(
+            [
+            Constraint::Length(3),
+            Constraint::Length(1),
+            Constraint::Length(1),
+            ]
+            .as_ref()
+        )
+        .split(inner_area);
+
+    let input = app.get_focused_input().clone();
+    let name = Paragraph::new(&input)
+        .style(
+            Style::default().fg(Color::Red)
+        )
+        .block(
+            Block::default()
+            .borders(Borders::ALL)
+            .title(input.name.clone())
+        )
+        .wrap(Wrap { trim: true });
+
+    frame.render_widget(name, chunks[0]);
+
+    // Display the blinking cursor, wrapped appropriately
+    let input_area = chunks[0];
+    let cursor_pos = get_wrapped_cursor_pos(&input, input_area);
+
+    frame.set_cursor(
+        chunks[0].x + cursor_pos.0 as u16 + 1,
+        chunks[0].y + cursor_pos.1 as u16
+    );
+
+    let info = Paragraph::new(
+        Span::styled(
+            "Press Enter to Save Changes, Esc to Exit",
+            Style::default()
+            .fg(Color::Red)
+            .add_modifier(Modifier::BOLD)
+        ))
+        .block(Block::default())
+        .wrap(Wrap { trim: true })
+        .alignment(Alignment::Center);
+
+    frame.render_widget(info, chunks[1]);
+
+    let info = Paragraph::new(
+        Span::styled(
+            "Press Delete to Clear Input",
+            Style::default()
+            .fg(Color::Red)
+            .add_modifier(Modifier::BOLD)
+        ))
+        .block(Block::default())
+        .wrap(Wrap { trim: true })
+        .alignment(Alignment::Center);
+
+    frame.render_widget(info, chunks[2]);
+}
+
 
 fn render_tracker<B: Backend>(
     frame: &mut Frame<B>,
@@ -539,9 +617,9 @@ fn render_task_data<B: Backend>(
     }
 }
 
-fn render_backlog_popup<B: Backend>(
+fn render_list_popup<B: Backend>(
     frame: &mut Frame<B>,
-    app: &mut App
+    app: &mut App,
 ) {
     let size = frame.size();
 
@@ -556,13 +634,14 @@ fn render_backlog_popup<B: Backend>(
         )
         .split(size);
 
+    let task_list = app.get_mut_focused_list(&app.state.clone());
     let container = CustomBorder::new()
-        .title(app.backlog.name.clone())
+        .title(task_list.name.clone())
         .title_style(
             Style::default()
             .fg(
                 Color::Indexed(
-                    app.backlog.color_index
+                    task_list.color_index
                 )
             )
             .add_modifier(Modifier::BOLD)
@@ -571,7 +650,7 @@ fn render_backlog_popup<B: Backend>(
             Style::default()
             .fg(
                 Color::Indexed(
-                    app.backlog.color_index
+                    task_list.color_index
                 )
             )
         );
@@ -579,8 +658,7 @@ fn render_backlog_popup<B: Backend>(
     frame.render_widget(Clear, chunks[1]); // Clear the area first
     frame.render_widget(container, chunks[1]);
 
-    let items: Vec<ListItem> = app
-        .backlog
+    let items: Vec<ListItem> = task_list
         .tasks
         .iter()
         .map(|i| {
@@ -597,68 +675,7 @@ fn render_backlog_popup<B: Backend>(
 
     let inner_area = shrink_rect(chunks[1], 1);
 
-    frame.render_stateful_widget(list, inner_area, &mut app.backlog.state);
-}
-
-fn render_archive_popup<B: Backend>(
-    frame: &mut Frame<B>,
-    app: &mut App
-) {
-    let size = frame.size();
-
-    let chunks = Layout::default()
-        .direction(Direction::Vertical)
-        .constraints(
-            [
-            Constraint::Percentage(50),
-            Constraint::Percentage(50),
-            ]
-            .as_ref()
-        )
-        .split(size);
-
-    let container = CustomBorder::new()
-        .title(app.archive.name.clone())
-        .title_style(
-            Style::default()
-            .fg(
-                Color::Indexed(
-                    app.archive.color_index
-                )
-            )
-            .add_modifier(Modifier::BOLD)
-        )
-        .border_style(
-            Style::default()
-            .fg(
-                Color::Indexed(
-                    app.archive.color_index
-                )
-            )
-        );
-
-    frame.render_widget(Clear, chunks[1]); // Clear the area first
-    frame.render_widget(container, chunks[1]);
-
-    let items: Vec<ListItem> = app
-        .archive
-        .tasks
-        .iter()
-        .map(|i| {
-            ListItem::new(task_spans(i, chunks[1].width - 2))
-        })
-        .collect();
-
-    let list = List::new(items)
-        .block(Block::default())
-        .highlight_style(
-            Style::default()
-            .add_modifier(Modifier::REVERSED)
-        );
-
-    let inner_area = shrink_rect(chunks[1], 1);
-
-    frame.render_stateful_widget(list, inner_area, &mut app.archive.state);
+    frame.render_stateful_widget(list, inner_area, &mut task_list.state);
 }
 
 fn render_task_editor<B: Backend>(
@@ -699,56 +716,25 @@ fn render_task_editor<B: Backend>(
         )
         .split(inner_area);
 
-    let summary = Paragraph::new(app.task_detail_inputs[0].clone())
-        .style(
-            if app.active_detail_input == 0 {
-                Style::default().fg(Color::Red)
-            } else {
-                Style::default()
-            }
-        )
-        .block(
-            Block::default()
-            .borders(Borders::ALL)
-            .title("Summary")
-        )
-        .wrap(Wrap { trim: true });
+    for i in 0..app.task_detail_inputs.len() {
+        let input = &app.task_detail_inputs[i];
+        let field = Paragraph::new(input.clone())
+            .style(
+                if app.active_detail_input == i {
+                    Style::default().fg(Color::Red)
+                } else {
+                    Style::default()
+                }
+            )
+            .block(
+                Block::default()
+                .borders(Borders::ALL)
+                .title(input.name.clone())
+            )
+            .wrap(Wrap { trim: true });
 
-    frame.render_widget(summary, chunks[0]);
-
-    let description = Paragraph::new(app.task_detail_inputs[1].clone())
-        .style(
-            if app.active_detail_input == 1 {
-                Style::default().fg(Color::Red)
-            } else {
-                Style::default()
-            }
-        )
-        .block(
-            Block::default()
-            .borders(Borders::ALL)
-            .title("Description")
-        )
-        .wrap(Wrap { trim: true });
-
-    frame.render_widget(description, chunks[1]);
-
-    let category = Paragraph::new(app.task_detail_inputs[2].clone())
-        .style(
-            if app.active_detail_input == 2 {
-                Style::default().fg(Color::Red)
-            } else {
-                Style::default()
-            }
-        )
-        .block(
-            Block::default()
-            .borders(Borders::ALL)
-            .title("Category")
-        )
-        .wrap(Wrap { trim: true });
-
-    frame.render_widget(category, chunks[2]);
+        frame.render_widget(field, chunks[i]);
+    }
 
     // Display the blinking cursor, wrapped appropriately
     let i = app.active_detail_input;
@@ -786,178 +772,6 @@ fn render_task_editor<B: Backend>(
         .alignment(Alignment::Center);
 
     frame.render_widget(info, chunks[4]);
-}
-
-fn render_list_editor<B: Backend>(
-    frame: &mut Frame<B>,
-    app: &mut App,
-    editor_title: String,
-) {
-    let size = frame.size();
-    let area = centered_fixed_size_rect((size.width as f32 * 0.6) as usize, 7, size);
-    let area_block = Block::default()
-        .title(
-            Span::styled(
-                editor_title,
-                Style::default()
-                .add_modifier(Modifier::BOLD)
-            )
-        )
-        .title_alignment(Alignment::Center)
-        .borders(Borders::ALL)
-        .border_type(BorderType::Double);
-
-    frame.render_widget(Clear, area); // Clear the area first
-    frame.render_widget(area_block, area);
-
-    let inner_area = shrink_rect(area, 1);
-
-    let chunks = Layout::default()
-        .direction(Direction::Vertical)
-        .constraints(
-            [
-            Constraint::Length(3),
-            Constraint::Length(1),
-            Constraint::Length(1),
-            ]
-            .as_ref()
-        )
-        .split(inner_area);
-
-    let name = Paragraph::new(app.list_detail_input.clone())
-        .style(
-            Style::default().fg(Color::Red)
-        )
-        .block(
-            Block::default()
-            .borders(Borders::ALL)
-            .title("List Name")
-        )
-        .wrap(Wrap { trim: true });
-
-    frame.render_widget(name, chunks[0]);
-
-    // Display the blinking cursor, wrapped appropriately
-    let input = &app.list_detail_input;
-    let input_area = chunks[0];
-    let cursor_pos = get_wrapped_cursor_pos(input, input_area);
-
-    frame.set_cursor(
-        chunks[0].x + cursor_pos.0 as u16 + 1,
-        chunks[0].y + cursor_pos.1 as u16
-    );
-
-    let info = Paragraph::new(
-        Span::styled(
-            "Press Enter to Save Changes, Esc to Exit",
-            Style::default()
-            .fg(Color::Red)
-            .add_modifier(Modifier::BOLD)
-        ))
-        .block(Block::default())
-        .wrap(Wrap { trim: true })
-        .alignment(Alignment::Center);
-
-    frame.render_widget(info, chunks[1]);
-
-    let info = Paragraph::new(
-        Span::styled(
-            "Press Delete to Clear Input",
-            Style::default()
-            .fg(Color::Red)
-            .add_modifier(Modifier::BOLD)
-        ))
-        .block(Block::default())
-        .wrap(Wrap { trim: true })
-        .alignment(Alignment::Center);
-
-    frame.render_widget(info, chunks[2]);
-}
-
-fn render_project_editor<B: Backend>(
-    frame: &mut Frame<B>,
-    app: &mut App,
-    editor_title: String,
-) {
-    let size = frame.size();
-    let area = centered_fixed_size_rect((size.width as f32 * 0.6) as usize, 7, size);
-    let area_block = Block::default()
-        .title(
-            Span::styled(
-                editor_title,
-                Style::default()
-                .add_modifier(Modifier::BOLD)
-            )
-        )
-        .title_alignment(Alignment::Center)
-        .borders(Borders::ALL)
-        .border_type(BorderType::Double);
-
-    frame.render_widget(Clear, area); // Clear the area first
-    frame.render_widget(area_block, area);
-
-    let inner_area = shrink_rect(area, 1);
-
-    let chunks = Layout::default()
-        .direction(Direction::Vertical)
-        .constraints(
-            [
-            Constraint::Length(3),
-            Constraint::Length(1),
-            Constraint::Length(1),
-            ]
-            .as_ref()
-        )
-        .split(inner_area);
-
-    let name = Paragraph::new(app.project_detail_input.clone())
-        .style(
-            Style::default().fg(Color::Red)
-        )
-        .block(
-            Block::default()
-            .borders(Borders::ALL)
-            .title("Project Name")
-        )
-        .wrap(Wrap { trim: true });
-
-    frame.render_widget(name, chunks[0]);
-
-    // Display the blinking cursor, wrapped appropriately
-    let input = &app.project_detail_input;
-    let input_area = chunks[0];
-    let cursor_pos = get_wrapped_cursor_pos(input, input_area);
-
-    frame.set_cursor(
-        chunks[0].x + cursor_pos.0 as u16 + 1,
-        chunks[0].y + cursor_pos.1 as u16
-    );
-
-    let info = Paragraph::new(
-        Span::styled(
-            "Press Enter to Save Changes, Esc to Exit",
-            Style::default()
-            .fg(Color::Red)
-            .add_modifier(Modifier::BOLD)
-        ))
-        .block(Block::default())
-        .wrap(Wrap { trim: true })
-        .alignment(Alignment::Center);
-
-    frame.render_widget(info, chunks[1]);
-
-    let info = Paragraph::new(
-        Span::styled(
-            "Press Delete to Clear Input",
-            Style::default()
-            .fg(Color::Red)
-            .add_modifier(Modifier::BOLD)
-        ))
-        .block(Block::default())
-        .wrap(Wrap { trim: true })
-        .alignment(Alignment::Center);
-
-    frame.render_widget(info, chunks[2]);
 }
 
 fn render_prompt<B: Backend>(
@@ -1068,22 +882,34 @@ fn render_task_list<B: Backend>(
 }
 
 fn task_spans<'a>(task: &Task, width: u16) -> Vec<Spans<'a>> {
-    let mut lines: Vec<Spans> = Vec::new();
+    let mut lines = Vec::new();
 
-    // Top Line
-    let mut line = String::new();
-    line.push_str(line::TOP_LEFT);
+    create_top_line(&mut lines, width);
+    create_summary_and_category_line(&mut lines, width, task);
+    create_description_lines(&mut lines, width, task);
+    create_bottom_line(&mut lines, width);
+
+    lines
+}
+
+fn create_top_line(lines: &mut Vec<Spans>, width: u16) {
+    let mut line = String::from(line::TOP_LEFT);
     for _ in 0..width - 2 {
         line.push_str(line::HORIZONTAL);
     }
     line.push_str(line::TOP_RIGHT);
     lines.push(Spans::from(line));
+}
+
+fn create_summary_and_category_line(lines: &mut Vec<Spans>, width: u16, task: &Task) {
+    let line_style = Style::default()
+        .add_modifier(Modifier::BOLD | Modifier::UNDERLINED);
 
     // Summary Left Side
-    let mut line = String::new();
-    let mut spans: Vec<Span> = Vec::new();
-    line.push_str(&format!("{} ", line::VERTICAL));
-    spans.push(Span::raw(line));
+    let line = String::from(
+        format!("{} ", line::VERTICAL)
+    );
+    let mut spans = vec![Span::raw(line)];
 
     // Summary Text
     let mut summary = task.summary.clone();
@@ -1091,15 +917,8 @@ fn task_spans<'a>(task: &Task, width: u16) -> Vec<Spans<'a>> {
         summary.truncate(width as usize / 3 * 2 - 5);
         summary = format!("{}...", summary);
     }
-    let mut line = String::new();
-    line.push_str(&summary);
-    spans.push(
-        Span::styled(
-            line,
-            Style::default()
-            .add_modifier(Modifier::BOLD | Modifier::UNDERLINED)
-        )
-    );
+    let line = String::from(&summary);
+    spans.push(Span::styled(line, line_style));
 
     // Category Text
     if let Some(category) = &task.category {
@@ -1108,49 +927,33 @@ fn task_spans<'a>(task: &Task, width: u16) -> Vec<Spans<'a>> {
             category.truncate(width as usize / 3 - 5);
             category = format!("{}...", category);
         }
-        let mut line = String::new();
-        line.push_str(&category);
-        spans.push(
-            Span::styled(
-                line,
-                Style::default()
-                .add_modifier(Modifier::BOLD | Modifier::UNDERLINED)
-            )
-        );
+        let line = String::from(&category);
+        spans.push(Span::styled(line, line_style));
     }
 
-    // Summary Right Side
-    let remaining_width = (width - 2) as usize - spans.iter()
-                                                      .map(|span| span.width())
-                                                      .sum::<usize>();
+    // Space Between Summary and Category
+    let current_width = spans
+        .iter()
+        .map(|span| span.width())
+        .sum::<usize>();
+    let remaining_width = (width - 2) as usize - current_width;
 
     let mut line = String::new();
     for _ in 0..remaining_width {
         line.push_str(" ");
     }
-    match task.category {
-        Some(_) => spans.insert(
-            spans.len() - 1, Span::styled(
-                line,
-                Style::default()
-                .add_modifier(Modifier::BOLD | Modifier::UNDERLINED),
-                )
-            ),
-        None => spans.push(
-            Span::styled(
-                line,
-                Style::default()
-                .add_modifier(Modifier::BOLD | Modifier::UNDERLINED),
-                )
-            ),
-    }
+    let index = cmp::max(2, spans.len() - 1);
+    spans.insert(index, Span::styled(line, line_style));
 
-    let mut line = String::new();
-    line.push_str(&format!(" {}", line::VERTICAL));
+    // Category Right Side
+    let line = String::from(
+        format!(" {}", line::VERTICAL)
+    );
     spans.push(Span::raw(line));
     lines.push(Spans::from(spans));
+}
 
-    // Description
+fn create_description_lines(lines: &mut Vec<Spans>, width: u16, task: &Task) {
     if let Some(description) = &task.description {
         let mut wrapped = wrap(description, (width - 4) as usize);
         if wrapped.len() > 3 {
@@ -1160,20 +963,22 @@ fn task_spans<'a>(task: &Task, width: u16) -> Vec<Spans<'a>> {
 
         for l in wrapped {
             // Description Left Side
-            let mut line = String::new();
-            let mut spans: Vec<Span> = Vec::new();
-            line.push_str(&format!("{} ", line::VERTICAL));
-            spans.push(Span::raw(line));
+            let mut spans = vec![
+                Span::raw(
+                    String::from(format!("{} ", line::VERTICAL))
+                )
+            ];
 
             // Description Text
-            let mut line = String::new();
-            line.push_str(&l);
-            spans.push(Span::raw(line));
+            spans.push(Span::raw(String::from(l)));
 
             // Description Right Side
-            let remaining_width = (width - 1) as usize - spans.iter()
-                                                              .map(|span| span.width())
-                                                              .sum::<usize>();
+            let current_width = spans
+                .iter()
+                .map(|span| span.width())
+                .sum::<usize>();
+            let remaining_width = (width - 1) as usize - current_width;
+
             let mut line = String::new();
             for _ in 0..remaining_width {
                 line.push_str(" ");
@@ -1183,17 +988,15 @@ fn task_spans<'a>(task: &Task, width: u16) -> Vec<Spans<'a>> {
             lines.push(Spans::from(spans));
         }
     }
+}
 
-    // Bottom Line
-    let mut line = String::new();
-    line.push_str(line::BOTTOM_LEFT);
+fn create_bottom_line(lines: &mut Vec<Spans>, width: u16) {
+    let mut line = String::from(line::BOTTOM_LEFT);
     for _ in 0..width - 2 {
         line.push_str(line::HORIZONTAL);
     }
     line.push_str(line::BOTTOM_RIGHT);
     lines.push(Spans::from(line));
-
-    lines
 }
 
 fn centered_rect(percent_x: usize, percent_y: usize, size: Rect) -> Rect {

@@ -53,7 +53,8 @@ impl App {
         let mut app = Self {
             project_title,
             project_list: ProjectList::create()?,
-            project_detail_input: Input::new(),
+            project_detail_input: Input::new()
+                .name("Project Name".to_string()),
 
             unsaved_changes: false,
             quit: false,
@@ -62,16 +63,30 @@ impl App {
             task_lists: Vec::new(),
             active_list: 0,
 
-            backlog: TaskList::default(),
-            archive: TaskList::default(),
+            backlog: TaskList::empty_backlog(),
+            archive: TaskList::empty_archive(),
 
             detail_scroll: 0,
 
-            task_detail_inputs: vec![Input::new(); 3],
+            task_detail_inputs: Vec::new(),
             active_detail_input: 0,
 
-            list_detail_input: Input::new(),
+            list_detail_input: Input::new()
+                .name("List Name".to_string()),
         };
+
+        app.task_detail_inputs.push(
+            Input::new()
+            .name("Summary".to_string())
+        );
+        app.task_detail_inputs.push(
+            Input::new()
+            .name("Description".to_string())
+        );
+        app.task_detail_inputs.push(
+            Input::new()
+            .name("Category".to_string())
+        );
 
         if app.project_title == "" {
             app.state = AppState::ProjectMenu;
@@ -140,7 +155,7 @@ impl App {
         sum
     }
 
-    fn get_focused_list(&self, state: &AppState) -> &TaskList {
+    pub fn get_focused_list(&self, state: &AppState) -> &TaskList {
         match state {
             AppState::Tracker => &self.task_lists[self.active_list],
             AppState::BacklogPopup(_) => &self.backlog,
@@ -157,7 +172,7 @@ impl App {
     }
 
 
-    fn get_mut_focused_list(&mut self, state: &AppState) -> &mut TaskList {
+    pub fn get_mut_focused_list(&mut self, state: &AppState) -> &mut TaskList {
         match state {
             AppState::Tracker => &mut self.task_lists[self.active_list],
             AppState::BacklogPopup(_) => &mut self.backlog,
@@ -570,13 +585,16 @@ impl App {
                 None => category = String::new()
             }
 
-            self.task_detail_inputs[0] = Input::from(task.summary.clone());
-            self.task_detail_inputs[1] = Input::from(description);
-            self.task_detail_inputs[2] = Input::from(category);
+            self.task_detail_inputs[0] = Input::from(task.summary.clone())
+                .name("Summary".to_string());
+            self.task_detail_inputs[1] = Input::from(description)
+                .name("Description".to_string());
+            self.task_detail_inputs[2] = Input::from(category)
+                .name("Category".to_string());
         }
     }
 
-    fn get_focused_input(&mut self) -> &mut Input {
+    pub fn get_focused_input(&mut self) -> &mut Input {
         match self.state {
             AppState::EditProject(_) => &mut self.project_detail_input,
             AppState::CreateProject(_) => &mut self.project_detail_input,
@@ -682,7 +700,8 @@ impl App {
     pub fn populate_list_detail_inputs(&mut self) {
         let list = self.get_focused_list(&self.state);
 
-        self.list_detail_input = Input::from(list.name.clone());
+        self.list_detail_input = Input::from(list.name.clone())
+            .name("List Name".to_string());
     }
 
     pub fn save_details_to_list(&mut self) {
@@ -842,7 +861,8 @@ impl App {
     pub fn populate_project_detail_inputs(&mut self) {
         if let Some(i) = self.project_list.get_selected_index() {
             let project = &self.project_list.projects[i];
-            self.project_detail_input = Input::from(project.clone());
+            self.project_detail_input = Input::from(project.clone())
+                .name("Project Name".to_string());
         }
     }
 }
