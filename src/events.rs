@@ -215,6 +215,11 @@ fn handle_tracker_events(
         KeyCode::Char('q') => app.set_quit(true),
         KeyCode::Esc => app.set_quit(true),
         KeyCode::Char('s') => app.save_changes()?,
+        KeyCode::Char('o') => {
+            app.save_changes()?;
+            app.move_up_one_directory()?;
+            app.change_state(AppState::ProjectMenu);
+        },
         KeyCode::Char('n') => {
             app.clear_detail_inputs();
             app.reset_active_detail_input();
@@ -322,6 +327,11 @@ fn handle_task_view_events(
     match key.code {
         KeyCode::Char('q') => app.set_quit(true),
         KeyCode::Char('s') => app.save_changes()?,
+        KeyCode::Char('o') => {
+            app.save_changes()?;
+            app.move_up_one_directory()?;
+            app.change_state(AppState::ProjectMenu);
+        },
         KeyCode::Char('j') => app.scroll_details(1),
         KeyCode::Down => app.scroll_details(1),
         KeyCode::Char('k') => app.scroll_details(-1),
@@ -348,6 +358,11 @@ fn handle_backlog_popup_events(
     match key.code {
         KeyCode::Char('q') => app.set_quit(true),
         KeyCode::Char('s') => app.save_changes()?,
+        KeyCode::Char('o') => {
+            app.save_changes()?;
+            app.move_up_one_directory()?;
+            app.change_state(AppState::ProjectMenu);
+        },
         KeyCode::Char('n') => {
             app.clear_detail_inputs();
             app.reset_active_detail_input();
@@ -460,6 +475,11 @@ fn handle_archive_popup_events(
     match key.code {
         KeyCode::Char('q') => app.set_quit(true),
         KeyCode::Char('s') => app.save_changes()?,
+        KeyCode::Char('o') => {
+            app.save_changes()?;
+            app.move_up_one_directory()?;
+            app.change_state(AppState::ProjectMenu);
+        },
         KeyCode::Char('d') => {
             if !app.focused_list_is_empty() {
                 app.change_state(

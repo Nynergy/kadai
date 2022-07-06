@@ -135,6 +135,15 @@ impl App {
         Ok(())
     }
 
+    pub fn move_up_one_directory(&mut self) -> Result<(), std::io::Error> {
+        self.project_title = String::new();
+        let mut path = env::current_dir()?;
+        path.pop();
+        env::set_current_dir(&path)?;
+
+        Ok(())
+    }
+
     pub fn get_highlighted_project(&self) -> Option<String> {
         match self.project_list.get_selected_index() {
             Some(i) => Some(self.project_list.projects[i].clone()),
