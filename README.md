@@ -24,10 +24,10 @@ Also I just wanted to use this project as an excuse to learn Rust :)
 
 ## What exactly does it do?
 
-It takes a project name on the command line, and creates that project directory
-in the user's `~/.kadai` directory if it doesn't already exist. Within each
-project directory there are three files: `tracker.json`, `backlog.json`, and
-`archive.json`, which is what _kadai_ uses to read and store task data.
+It takes an optional project name on the command line, and creates that project
+directory in the user's `~/.kadai` directory if it doesn't already exist. Within
+each project directory there are three files: `tracker.json`, `backlog.json`,
+and `archive.json`, which is what _kadai_ uses to read and store task data.
 
 Invoking _kadai_ without specifying a project name will show you the project
 selection menu, where you can open an existing project, create a new one, edit
@@ -47,8 +47,8 @@ tracker anymore, but also shouldn't be deleted. Of course, you can permanently
 delete tasks and lists as you wish.
 
 Above all this information is a handy-dandy info bar that displays the name of
-the current project, the number of backlogged and archived tasks, and even a
-textual indicator in the center warning of unsaved changes.
+the current project, the number of backlogged, tracked, and archived tasks, and
+even a textual indicator in the center warning of unsaved changes.
 
 ## How can I compile and run it?
 
@@ -103,6 +103,7 @@ Key | Action
 Key | Action
 ----|-------
 <kbd>Char</kbd> | enter character into focused input
+<kbd>Ctrl</kbd> + <kbd>w</kbd> | delete input to previous space
 <kbd>Backspace</kbd> | delete character from focused input
 <kbd>Delete</kbd> | clear focused input
 <kbd>Left</kbd> and <kbd>Right</kbd> | move cursor position left and right
@@ -181,6 +182,7 @@ Key | Action
 Key | Action
 ----|-------
 <kbd>Char</kbd> | enter character into focused input
+<kbd>Ctrl</kbd> + <kbd>w</kbd> | delete input to previous space
 <kbd>Backspace</kbd> | delete character from focused input
 <kbd>Delete</kbd> | clear focused input
 <kbd>Left</kbd> and <kbd>Right</kbd> | move cursor position left and right
@@ -195,6 +197,7 @@ Key | Action
 Key | Action
 ----|-------
 <kbd>Char</kbd> | enter character into focused input
+<kbd>Ctrl</kbd> + <kbd>w</kbd> | delete input to previous space
 <kbd>Backspace</kbd> | delete character from focused input
 <kbd>Delete</kbd> | clear focused input
 <kbd>Left</kbd> and <kbd>Right</kbd> | move cursor position left and right
