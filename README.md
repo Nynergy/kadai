@@ -118,11 +118,13 @@ Key | Action
 ----|-------
 <kbd>q</kbd> / <kbd>Esc</kbd> | save and quit kadai
 <kbd>s</kbd> | save without exiting
+<kbd>o</kbd> | save and return to project select menu
 <kbd>n</kbd> and <kbd>N</kbd> | add new task/list
 <kbd>e</kbd> and <kbd>E</kbd> | edit task/list
 <kbd>d</kbd> and <kbd>D</kbd> | delete focused task/list
 <kbd>j</kbd> and <kbd>k</kbd> / <kbd>Up</kbd> and <kbd>Down</kbd> | change task focus up and down
 <kbd>J</kbd> and <kbd>K</kbd> / <kbd>Ctrl</kbd> + <kbd>Up</kbd> and <kbd>Ctrl</kbd> + <kbd>Down</kbd> | move task up and down
+<kbd>Ctrl</kbd> + <kbd>j</kbd> and <kbd>Ctrl</kbd> + <kbd>k</kbd> | move task to top/bottom of list
 <kbd>h</kbd> and <kbd>l</kbd> / <kbd>Left</kbd> and <kbd>Right</kbd> | change list focus left and right
 <kbd>H</kbd> and <kbd>L</kbd> / <kbd>Ctrl</kbd> + <kbd>Left</kbd> and <kbd>Ctrl</kbd> + <kbd>Right</kbd>| move list left and right
 <kbd>g</kbd> and <kbd>G</kbd> / <kbd>Home</kbd> and <kbd>End</kbd>| jump to top or bottom of list
@@ -140,6 +142,7 @@ Key | Action
 ----|-------
 <kbd>q</kbd> | save and quit kadai
 <kbd>s</kbd> | save without exiting
+<kbd>o</kbd> | save and return to project select menu
 <kbd>j</kbd> and <kbd>k</kbd> / <kbd>Up</kbd> and <kbd>Down</kbd> | scroll details up and down
 <kbd>Enter</kbd> / <kbd>Esc</kbd> | exit task details view
 
@@ -149,11 +152,13 @@ Key | Action
 ----|-------
 <kbd>q</kbd> | save and quit kadai
 <kbd>s</kbd> | save without exiting
+<kbd>o</kbd> | save and return to project select menu
 <kbd>n</kbd> | add new task
 <kbd>e</kbd> | edit task
 <kbd>d</kbd> | delete focused task
 <kbd>j</kbd> and <kbd>k</kbd> / <kbd>Up</kbd> and <kbd>Down</kbd> | change task focus up and down
 <kbd>J</kbd> and <kbd>K</kbd> / <kbd>Ctrl</kbd> + <kbd>Up</kbd> and <kbd>Ctrl</kbd> + <kbd>Down</kbd> | move task up and down
+<kbd>Ctrl</kbd> + <kbd>j</kbd> and <kbd>Ctrl</kbd> + <kbd>k</kbd> | move task to top/bottom of list
 <kbd>g</kbd> and <kbd>G</kbd> / <kbd>Home</kbd> and <kbd>End</kbd>| jump to top or bottom of list
 <kbd>c</kbd> and <kbd>C</kbd> | cycle backlog list color
 <kbd>Space</kbd> | move focused task to first list
@@ -167,9 +172,11 @@ Key | Action
 ----|-------
 <kbd>q</kbd> | save and quit kadai
 <kbd>s</kbd> | save without exiting
+<kbd>o</kbd> | save and return to project select menu
 <kbd>d</kbd> | delete focused task
 <kbd>j</kbd> and <kbd>k</kbd> / <kbd>Up</kbd> and <kbd>Down</kbd> | change task focus up and down
 <kbd>J</kbd> and <kbd>K</kbd> / <kbd>Ctrl</kbd> + <kbd>Up</kbd> and <kbd>Ctrl</kbd> + <kbd>Down</kbd> | move task up and down
+<kbd>Ctrl</kbd> + <kbd>j</kbd> and <kbd>Ctrl</kbd> + <kbd>k</kbd> | move task to top/bottom of list
 <kbd>g</kbd> and <kbd>G</kbd> / <kbd>Home</kbd> and <kbd>End</kbd>| jump to top or bottom of list
 <kbd>c</kbd> and <kbd>C</kbd> | cycle backlog list color
 <kbd>Space</kbd> | move focused task to last list
