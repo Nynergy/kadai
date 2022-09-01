@@ -1065,11 +1065,26 @@ fn get_wrapped_cursor_pos(input: &Input, area: Rect) -> (usize, usize) {
     let trailing_spaces = &input.num_trailing_spaces();
     let wrap_options = Options::new(input_width)
         .wrap_algorithm(WrapAlgorithm::FirstFit);
-    let strings = wrap(&input.text, wrap_options);
+    let mut strings = wrap(&input.text, wrap_options);
     let string = &mut strings[strings.len() - 1].to_string();
     for _ in 0..*trailing_spaces {
         string.push(' ');
     }
+    strings.pop();
+    strings.push(Cow::Borrowed(string));
 
-    (string.len(), strings.len())
+    let mut cursor_x = string.len();
+    let mut cursor_y = strings.len();
+    let pos_diff = input.text.len() - input.pos;
+
+    for _ in 0..pos_diff {
+        if cursor_x == 0 {
+            cursor_y -= 1;
+            cursor_x = strings[cursor_y - 1].len();
+        } else {
+            cursor_x -= 1;
+        }
+    }
+
+    (cursor_x, cursor_y)
 }
