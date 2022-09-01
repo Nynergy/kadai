@@ -57,8 +57,18 @@ fn main() -> Result<(), Box<dyn Error>> {
     terminal.clear()?;
 
     // Application Entry Point
-    let mut app = App::create(args[1].clone())?;
-    let res = run_app(&mut terminal, &mut app);
+    let res: io::Result<()>;
+    if project_exists(&args[1])? {
+        let mut app = App::create(args[1].clone())?;
+        res = run_app(&mut terminal, &mut app);
+    } else {
+        res = Err(io::Error::new(
+                io::ErrorKind::NotFound,
+                format!("Project '{}' does not exist.\nTo create it, run 'kadai' with no arguments, then press 'n'.", &args[1])
+            )
+        );
+    }
+
 
     // Restore Terminal
     disable_raw_mode()?;
@@ -72,7 +82,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     // Report Errors
     if let Err(err) = res {
-        println!("{:?}", err);
+        println!("{}", err.into_inner().unwrap());
     }
 
     Ok(())
@@ -115,6 +125,13 @@ fn get_kadai_directory(path: PathBuf) -> Result<PathBuf, io::Error> {
     env::set_current_dir(&path)?;
 
     Ok(path)
+}
+
+fn project_exists(project: &String) -> Result<bool, io::Error> {
+    let mut path = env::current_dir()?;
+    path.push(project);
+
+    Ok(path.exists())
 }
 
 fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<()> {
