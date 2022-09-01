@@ -4,6 +4,8 @@ use crossterm::{
         Event,
         KeyCode,
         KeyEvent,
+        KeyEventKind,
+        KeyEventState,
         KeyModifiers
     }
 };
@@ -107,6 +109,8 @@ fn handle_edit_project_events(
                 KeyEvent {
                     code: KeyCode::Char('w'),
                     modifiers: KeyModifiers::CONTROL,
+                    kind: KeyEventKind::Press,
+                    state: KeyEventState::NONE
                 } => app.delete_to_prev_space(),
                 _ => app.add_to_detail_input(c)
             }
@@ -151,6 +155,8 @@ fn handle_create_project_events(
                 KeyEvent {
                     code: KeyCode::Char('w'),
                     modifiers: KeyModifiers::CONTROL,
+                    kind: KeyEventKind::Press,
+                    state: KeyEventState::NONE
                 } => app.delete_to_prev_space(),
                 _ => app.add_to_detail_input(c)
             }
@@ -566,6 +572,8 @@ fn handle_edit_task_events(key: KeyEvent, app: &mut App, prev: AppState) {
                 KeyEvent {
                     code: KeyCode::Char('w'),
                     modifiers: KeyModifiers::CONTROL,
+                    kind: KeyEventKind::Press,
+                    state: KeyEventState::NONE
                 } => app.delete_to_prev_space(),
                 _ => app.add_to_detail_input(c)
             }
@@ -608,6 +616,8 @@ fn handle_create_task_events(key: KeyEvent, app: &mut App, prev: AppState) {
                 KeyEvent {
                     code: KeyCode::Char('w'),
                     modifiers: KeyModifiers::CONTROL,
+                    kind: KeyEventKind::Press,
+                    state: KeyEventState::NONE
                 } => app.delete_to_prev_space(),
                 _ => app.add_to_detail_input(c)
             }
@@ -666,6 +676,8 @@ fn handle_edit_list_events(key: KeyEvent, app: &mut App, prev: AppState) {
                 KeyEvent {
                     code: KeyCode::Char('w'),
                     modifiers: KeyModifiers::CONTROL,
+                    kind: KeyEventKind::Press,
+                    state: KeyEventState::NONE
                 } => app.delete_to_prev_space(),
                 _ => app.add_to_detail_input(c)
             }
@@ -704,6 +716,8 @@ fn handle_create_list_events(key: KeyEvent, app: &mut App, prev: AppState) {
                 KeyEvent {
                     code: KeyCode::Char('w'),
                     modifiers: KeyModifiers::CONTROL,
+                    kind: KeyEventKind::Press,
+                    state: KeyEventState::NONE
                 } => app.delete_to_prev_space(),
                 _ => app.add_to_detail_input(c)
             }

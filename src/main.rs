@@ -1,7 +1,10 @@
 use crossterm::{
     event::{
         DisableMouseCapture,
-        EnableMouseCapture
+        EnableMouseCapture,
+        KeyboardEnhancementFlags,
+        PushKeyboardEnhancementFlags,
+        PopKeyboardEnhancementFlags
     },
     execute,
     terminal::{
@@ -41,7 +44,14 @@ fn main() -> Result<(), Box<dyn Error>> {
     // Setup Terminal
     enable_raw_mode()?;
     let mut stdout = io::stdout();
-    execute!(stdout, EnterAlternateScreen, EnableMouseCapture)?;
+    execute!(
+        stdout,
+        EnterAlternateScreen,
+        EnableMouseCapture,
+        PushKeyboardEnhancementFlags(
+            KeyboardEnhancementFlags::DISAMBIGUATE_ESCAPE_CODES
+        )
+    )?;
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
     terminal.clear()?;
@@ -55,7 +65,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     execute!(
         terminal.backend_mut(),
         LeaveAlternateScreen,
-        DisableMouseCapture
+        DisableMouseCapture,
+        PopKeyboardEnhancementFlags
     )?;
     terminal.show_cursor()?;
 
