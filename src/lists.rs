@@ -104,6 +104,8 @@ impl ProjectList {
             list.state.select(Some(0));
         }
 
+        list.projects.sort();
+
         Ok(list)
     }
 
