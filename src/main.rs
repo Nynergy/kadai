@@ -37,23 +37,17 @@ use app::*;
 use events::*;
 use ui::*;
 
-fn main() -> Result<(), Box<dyn Error>> {
+type Result<T> = std::result::Result<T, Box<dyn Error>>;
+
+fn main() -> Result<()> {
     let args = get_command_line_args();
     setup_project_path()?;
 
+    // Panic Handling
+    chain_hook();
+
     // Setup Terminal
-    enable_raw_mode()?;
-    let mut stdout = io::stdout();
-    execute!(
-        stdout,
-        EnterAlternateScreen,
-        EnableMouseCapture,
-        PushKeyboardEnhancementFlags(
-            KeyboardEnhancementFlags::DISAMBIGUATE_ESCAPE_CODES
-        )
-    )?;
-    let backend = CrosstermBackend::new(stdout);
-    let mut terminal = Terminal::new(backend)?;
+    let mut terminal = init_terminal()?;
     terminal.clear()?;
 
     // Application Entry Point
@@ -71,14 +65,8 @@ fn main() -> Result<(), Box<dyn Error>> {
 
 
     // Restore Terminal
-    disable_raw_mode()?;
-    execute!(
-        terminal.backend_mut(),
-        LeaveAlternateScreen,
-        DisableMouseCapture,
-        PopKeyboardEnhancementFlags
-    )?;
     terminal.show_cursor()?;
+    reset_terminal()?;
 
     // Report Errors
     if let Err(err) = res {
@@ -98,14 +86,14 @@ fn get_command_line_args() -> Vec<String> {
     args
 }
 
-fn setup_project_path() -> Result<(), io::Error> {
+fn setup_project_path() -> Result<()> {
     let path = get_user_home()?;
     get_kadai_directory(path)?;
 
     Ok(())
 }
 
-fn get_user_home() -> Result<PathBuf, io::Error> {
+fn get_user_home() -> Result<PathBuf> {
     let user_home = env::var("HOME");
     let user_home = user_home.unwrap_or_else(|_| {
         eprintln!("Could not find environment variable: $HOME");
@@ -117,7 +105,7 @@ fn get_user_home() -> Result<PathBuf, io::Error> {
     Ok(path)
 }
 
-fn get_kadai_directory(path: PathBuf) -> Result<PathBuf, io::Error> {
+fn get_kadai_directory(path: PathBuf) -> Result<PathBuf> {
     let path = path.join(".kadai");
     if !path.exists() {
         fs::create_dir(&path)?;
@@ -127,7 +115,7 @@ fn get_kadai_directory(path: PathBuf) -> Result<PathBuf, io::Error> {
     Ok(path)
 }
 
-fn project_exists(project: &String) -> Result<bool, io::Error> {
+fn project_exists(project: &String) -> Result<bool> {
     let mut path = env::current_dir()?;
     path.push(project);
 
@@ -145,6 +133,44 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
     }
 
     app.save_changes()?;
+
+    Ok(())
+}
+
+pub fn chain_hook() {
+    let original_hook = std::panic::take_hook();
+
+    std::panic::set_hook(Box::new(move |panic| {
+        reset_terminal().unwrap();
+        original_hook(panic);
+    }));
+}
+
+pub fn init_terminal() -> Result<Terminal<CrosstermBackend<io::Stdout>>> {
+    enable_raw_mode()?;
+    let mut stdout = io::stdout();
+    execute!(
+        stdout,
+        EnterAlternateScreen,
+        EnableMouseCapture,
+        PushKeyboardEnhancementFlags(
+            KeyboardEnhancementFlags::DISAMBIGUATE_ESCAPE_CODES
+        )
+    )?;
+    let backend = CrosstermBackend::new(stdout);
+    let terminal = Terminal::new(backend)?;
+
+    Ok(terminal)
+}
+
+pub fn reset_terminal() -> Result<()> {
+    disable_raw_mode()?;
+    execute!(
+        io::stdout(),
+        LeaveAlternateScreen,
+        DisableMouseCapture,
+        PopKeyboardEnhancementFlags
+    )?;
 
     Ok(())
 }
