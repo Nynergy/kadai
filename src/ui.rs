@@ -117,6 +117,12 @@ impl Widget for CustomBorder {
 }
 
 pub fn ui<B: Backend>(frame: &mut Frame<B>, app: &mut App, state: AppState) {
+    // If the width of the terminal is too small, just render a blank screen
+    if frame.size().width <= 50 {
+        frame.render_widget(Clear, frame.size());
+        return;
+    }
+
     match state {
         AppState::ProjectMenu => render_project_menu(frame, app),
         AppState::EditProject(prev) => {
@@ -913,8 +919,8 @@ fn create_summary_and_category_line(lines: &mut Vec<Spans>, width: u16, task: &T
 
     // Summary Text
     let mut summary = task.summary.clone();
-    if task.summary.len() >= width as usize / 3 * 2 {
-        summary.truncate(width as usize / 3 * 2 - 5);
+    if task.summary.len() >= width as usize / 3 * 2 - 2 {
+        summary.truncate(width as usize / 3 * 2 - 6);
         summary = format!("{}...", summary);
     }
     let line = String::from(&summary);
@@ -923,7 +929,7 @@ fn create_summary_and_category_line(lines: &mut Vec<Spans>, width: u16, task: &T
     // Category Text
     if let Some(category) = &task.category {
         let mut category = category.clone();
-        if category.len() >= width as usize / 3 {
+        if category.len() >= width as usize / 3  - 1{
             category.truncate(width as usize / 3 - 5);
             category = format!("{}...", category);
         }
@@ -936,7 +942,11 @@ fn create_summary_and_category_line(lines: &mut Vec<Spans>, width: u16, task: &T
         .iter()
         .map(|span| span.width())
         .sum::<usize>();
-    let remaining_width = (width - 2) as usize - current_width;
+    let remaining_width = cmp::max(
+        ((width - 2) as usize).checked_sub(current_width)
+            .unwrap_or(1),
+        1
+    );
 
     let mut line = String::new();
     for _ in 0..remaining_width {
