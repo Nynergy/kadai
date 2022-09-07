@@ -626,8 +626,7 @@ impl App {
     }
 
     pub fn delete_to_prev_space(&mut self) {
-        self.input_jump_to_space_left();
-        self.input_truncate_to_cursor();
+        self.input_delete_to_left_space();
     }
 
     pub fn next_detail_input(&mut self) {
@@ -805,9 +804,9 @@ impl App {
         input.move_to_next_space();
     }
 
-    pub fn input_truncate_to_cursor(&mut self) {
+    pub fn input_delete_to_left_space(&mut self) {
         let input = self.get_focused_input();
-        input.truncate_to_cursor();
+        input.delete_to_left_space();
     }
 
     pub fn clear_project_inputs(&mut self) {

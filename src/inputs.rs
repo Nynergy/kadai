@@ -120,8 +120,15 @@ impl Input {
         }
     }
 
-    pub fn truncate_to_cursor(&mut self) {
-        self.text.truncate(self.pos);
+    pub fn delete_to_left_space(&mut self) {
+        let prev_pos = self.pos;
+        self.move_to_prev_space();
+        let curr_pos = self.pos;
+
+        let left = &self.text[..curr_pos];
+        let right = &self.text[prev_pos..];
+
+        self.text = format!("{}{}", left, right);
     }
 }
 
